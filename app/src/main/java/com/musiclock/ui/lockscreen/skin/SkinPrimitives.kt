@@ -141,6 +141,30 @@ fun rememberSpin(playing: Boolean, periodMillis: Int): Float {
 }
 
 /**
+ * Same spin as [rememberSpin] but returns a `() -> Float` whose angle read happens only when the
+ * lambda is invoked. Read it inside a `Modifier.graphicsLayer { rotationZ = spin() }` so the
+ * per-frame state read invalidates the draw layer alone — the caller does NOT recompose each frame.
+ */
+@Composable
+fun rememberSpinAngle(playing: Boolean, periodMillis: Int): () -> Float {
+    val angle = remember { Animatable(0f) }
+    LaunchedEffect(playing, periodMillis) {
+        if (playing) {
+            angle.animateTo(
+                targetValue = angle.value + 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(periodMillis, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+            )
+        } else {
+            angle.stop()
+        }
+    }
+    return { angle.value % 360f }
+}
+
+/**
  * A simple animated equalizer: [bars] vertical bars whose heights oscillate out of phase while
  * [playing], collapsing to a thin idle line when paused. Fills the given [modifier]'s box.
  */

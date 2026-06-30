@@ -27,9 +27,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +34,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -65,7 +63,7 @@ fun TurntableSkin(scope: SkinScope) {
     val bgStops = listOf(0f, 0.55f, 1f)
 
     val ink = if (dark) Color(0xFFEFE9D8) else Color(0xFF2A2418)
-    val pillTint = if (dark) Color(0x33000000) else Color(0x22000000)
+    val pillTint = if (dark) Color(0x66000000) else Color(0x22000000)
     val mutedInk = ink.copy(alpha = 0.70f)
 
     val clock = rememberClockText()
@@ -238,14 +236,16 @@ fun TurntableSkin(scope: SkinScope) {
 /** 230dp vinyl disc with radial-groove texture and circular album art label in the centre. */
 @Composable
 private fun VinylDisc(scope: SkinScope) {
-    val spin = rememberSpin(scope.isPlaying, 8000)
+    // Lambda-read spin: the angle is sampled in the graphicsLayer draw block, so the per-frame
+    // rotation invalidates only the layer — VinylDisc itself does not recompose each frame.
+    val spin = rememberSpinAngle(scope.isPlaying, 8000)
 
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.size(230.dp),
     ) {
         // Disc drawn on canvas so it rotates as one unit
-        Canvas(modifier = Modifier.size(230.dp).rotate(spin)) {
+        Canvas(modifier = Modifier.size(230.dp).graphicsLayer { rotationZ = spin() }) {
             val c = Offset(size.width / 2f, size.height / 2f)
             val outer = size.minDimension / 2f
 
@@ -280,7 +280,7 @@ private fun VinylDisc(scope: SkinScope) {
             shape = CircleShape,
             modifier = Modifier
                 .size(120.dp)
-                .rotate(spin),
+                .graphicsLayer { rotationZ = spin() },
         )
     }
 }
