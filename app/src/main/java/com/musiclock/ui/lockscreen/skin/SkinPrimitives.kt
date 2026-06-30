@@ -97,10 +97,13 @@ fun rememberDeviceVolume(): Pair<Float, (Float) -> Unit> {
             delay(500)
         }
     }
-    val set: (Float) -> Unit = { frac ->
-        val level = (frac.coerceIn(0f, 1f) * max).roundToInt()
-        audio.setStreamVolume(AudioManager.STREAM_MUSIC, level, 0)
-        current = level
+    // Memoized so passing it to a slider child doesn't churn that child on every poll tick.
+    val set = remember(audio, max) {
+        { frac: Float ->
+            val level = (frac.coerceIn(0f, 1f) * max).roundToInt()
+            audio.setStreamVolume(AudioManager.STREAM_MUSIC, level, 0)
+            current = level
+        }
     }
     return volumeFraction(current, max) to set
 }
