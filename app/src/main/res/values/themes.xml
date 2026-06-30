@@ -1,0 +1,12 @@
+<resources>
+    <!-- Compose owns all real styling; these are just the launch shells. -->
+    <style name="Theme.MusicLock" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+
+    <style name="Theme.MusicLock.Lockscreen" parent="Theme.MusicLock">
+        <item name="android:windowShowWallpaper">false</item>
+    </style>
+</resources>

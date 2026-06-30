@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MusicLock</string>
+    <string name="listener_label">MusicLock media access</string>
+</resources>

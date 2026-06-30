@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="tokyo-night">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Media Lockscreen · Implementation Plan</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/tokyo-night.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<style>
+  .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:600;border:1px solid var(--border);background:var(--surface);margin:2px}
+  .pill.ok{color:#7ee787;border-color:#2ea04366}
+  .pill.warn{color:#e3b341;border-color:#bb800966}
+  .pill.bad{color:#ff7b72;border-color:#da363366}
+  table.t{width:100%;border-collapse:collapse;font-size:15px;margin-top:14px}
+  table.t th,table.t td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+  table.t th{color:var(--text-2);font-size:13px;text-transform:uppercase;letter-spacing:.04em}
+  .flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin-top:18px}
+  .flow .box{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
+  .flow .box h5{margin:0 0 4px;font-size:14px}
+  .flow .box p{margin:0;font-size:12px;color:var(--text-2)}
+  .arrow{align-self:center;color:var(--text-2);font-size:22px}
+  code.k{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1px 6px;font-size:13px}
+  .small{font-size:13px;color:var(--text-2)}
+</style>
+</head>
+<body data-themes="tokyo-night,dracula,blueprint" data-theme-base="assets/themes/">
+<div class="deck">
+
+  <!-- 1. Cover -->
+  <section class="slide" data-title="Cover">
+    <p class="kicker">Android · Kotlin · Jetpack Compose · 2026</p>
+    <h1 class="h1 anim-fade-up" data-anim="fade-up">Custom Media<br><span class="gradient-text">Lockscreen</span></h1>
+    <p class="lede">Implementation plan & OS-restriction audit — minSdk 33 (Android 13) → Android 15</p>
+    <div class="deck-footer"><span class="dim2">Senior Android · MVVM · Coroutines/StateFlow</span><span class="slide-number" data-current="1" data-total="12"></span></div>
+    <div class="notes">Plan deck for review. Built from the supplied spec, an OS-restrictions audit, and current Android 12–15 research. Press → to walk through. Headline message: the spec is 90% right, but the activity-launch path needs reworking for modern BAL rules.</div>
+  </section>
+
+  <!-- 2. TL;DR -->
+  <section class="slide" data-title="TL;DR">
+    <p class="kicker">Executive summary</p>
+    <h2 class="h2">The spec is solid — one mechanism must change</h2>
+    <div class="grid g3 mt-l anim-stagger-list" data-anim-target>
+      <div class="card"><h4>✅ Keep</h4><p class="dim">NotificationListenerService media engine, Compose UI, swipe-to-unlock, theming, the permission checklist.</p></div>
+      <div class="card"><h4>⚠️ Change</h4><p class="dim">Don't <code class="k">startActivity()</code> from the SCREEN_OFF receiver — BAL blocks it on Android 12+. Launch via a <b>full-screen-intent notification</b>.</p></div>
+      <div class="card"><h4>➕ Add</h4><p class="dim">Use the listener service as the process anchor (no separate FGS needed), plus an overlay-window fallback.</p></div>
+    </div>
+    <p class="small mt-l">Min SDK lowered to <b>33 (Android 13)</b> per request — this is the version where FSI is still auto-granted on install, which works in our favor.</p>
+  </section>
+
+  <!-- 3. Architecture -->
+  <section class="slide" data-title="Architecture">
+    <p class="kicker">Components</p>
+    <h2 class="h2">Four parts, one StateFlow</h2>
+    <div class="flow">
+      <div class="box"><h5>🎧 Media Engine</h5><p>NotificationListenerService + MediaSessionManager.getActiveSessions(). Exposes track state.</p></div>
+      <div class="arrow">→</div>
+      <div class="box"><h5>📦 Repository</h5><p>Singleton object. <code class="k">StateFlow&lt;NowPlaying&gt;</code> — single source of truth.</p></div>
+      <div class="arrow">→</div>
+      <div class="box"><h5>🔔 Trigger</h5><p>SCREEN_OFF receiver → FSI notification when music is playing.</p></div>
+      <div class="arrow">→</div>
+      <div class="box"><h5>🖼️ Canvas</h5><p>ComponentActivity, showWhenLocked, collectAsState() → Compose UI.</p></div>
+    </div>
+    <p class="small mt-l">The listener service does double duty: media reader <i>and</i> always-alive process anchor (the system keeps a bound listener's process from being killed).</p>
+    <div class="notes">Note the MVVM split: Repository is the Model layer (StateFlow), Activity hosts a thin ViewModel that just re-exposes the repo flow + the local progress ticker. No DI framework needed for a 4-component app — a Kotlin `object` singleton is the lazy-correct choice.</div>
+  </section>
+
+  <!-- 4. The BAL problem -->
+  <section class="slide" data-title="BAL problem">
+    <p class="kicker">Critical correction</p>
+    <h2 class="h2">Why the direct-launch path fails</h2>
+    <div class="grid g2 mt-l">
+      <div class="card"><h4 style="color:#ff7b72">The spec's plan</h4><p class="dim">SCREEN_OFF received → <code class="k">startActivity(lockscreen)</code> straight from the receiver.</p><p class="small">On Android 12+ this is a <b>Background Activity Launch</b>. A running foreground service is <b>not</b> on the exemption list. The call is silently dropped — no crash, no screen.</p></div>
+      <div class="card"><h4 style="color:#7ee787">The working plan</h4><p class="dim">SCREEN_OFF received → post a <b>full-screen-intent notification</b> whose PendingIntent opens the Activity.</p><p class="small">FSI routes through system notification infra, which has its own launch privilege. Fallback: draw a <code class="k">TYPE_APPLICATION_OVERLAY</code> window.</p></div>
+    </div>
+    <p class="small mt-l">Android 15 also narrowed the <code class="k">SYSTEM_ALERT_WINDOW</code> launch exemption: holding the permission isn't enough — an overlay must be <i>visibly on screen</i> at launch time. FSI sidesteps this.</p>
+    <div class="notes">This is the single most important slide. If we build it the way the spec literally says, it will work in the emulator sometimes and fail on real devices/newer OS versions intermittently — the worst kind of bug. The FSI notification is how Glimpse and similar apps actually do it. Source: developer.android.com background-starts + Android 14/15 behavior-changes.</div>
+  </section>
+
+  <!-- 5. Permission matrix -->
+  <section class="slide" data-title="Permissions">
+    <p class="kicker">The hard part</p>
+    <h2 class="h2">Permission matrix (Android 13 → 15)</h2>
+    <table class="t">
+      <tr><th>Permission</th><th>Why</th><th>Grant path</th><th>13 / 14 / 15</th></tr>
+      <tr><td>BIND_NOTIFICATION_LISTENER_SERVICE</td><td>Read media sessions + process anchor</td><td>Settings → Notification access</td><td><span class="pill warn">manual</span></td></tr>
+      <tr><td>SYSTEM_ALERT_WINDOW</td><td>Overlay fallback + BAL helper</td><td>Settings → Display over apps</td><td><span class="pill warn">manual</span></td></tr>
+      <tr><td>USE_FULL_SCREEN_INTENT</td><td>Launch lockscreen reliably</td><td><span class="pill ok">auto on 13</span> · <span class="pill bad">denied 14+</span> → settings deep-link</td><td><span class="pill ok">13 ok</span></td></tr>
+      <tr><td>POST_NOTIFICATIONS</td><td>Show the FSI / anchor notification</td><td>Runtime dialog (13+)</td><td><span class="pill warn">runtime</span></td></tr>
+      <tr><td>FOREGROUND_SERVICE(_*)</td><td>Only if FGS path used</td><td>Manifest (normal)</td><td><span class="pill ok">auto</span></td></tr>
+      <tr><td>Battery optimization exempt</td><td>Stop OEM killing the process</td><td>Settings deep-link (user choice)</td><td><span class="pill warn">manual</span></td></tr>
+    </table>
+    <div class="notes">Android 13 min-SDK is a real win on row 3: apps installed on 13 keep USE_FULL_SCREEN_INTENT auto-granted. On 14+ we must check canUseFullScreenIntent() and deep-link to ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT. Every manual grant is onboarding friction — the permission UX is genuinely the make-or-break of this app.</div>
+  </section>
+
+  <!-- 6. Onboarding flow -->
+  <section class="slide" data-title="Onboarding">
+    <p class="kicker">Phase 1 deliverable</p>
+    <h2 class="h2">Permission onboarding flow</h2>
+    <div class="flow">
+      <div class="box"><h5>1 · Notifications</h5><p>POST_NOTIFICATIONS runtime dialog</p></div><div class="arrow">→</div>
+      <div class="box"><h5>2 · Listener access</h5><p>Deep-link, poll on resume</p></div><div class="arrow">→</div>
+      <div class="box"><h5>3 · Overlay</h5><p>Settings.canDrawOverlays()</p></div><div class="arrow">→</div>
+      <div class="box"><h5>4 · FSI (14+)</h5><p>canUseFullScreenIntent()</p></div><div class="arrow">→</div>
+      <div class="box"><h5>5 · Battery</h5><p>Optional exemption</p></div>
+    </div>
+    <p class="small mt-l">A single Compose <code class="k">PermissionGate</code> screen: each step is a row with a live ✓/✗ status re-checked in <code class="k">ON_RESUME</code> (you can't get callbacks from system settings — you re-poll when the user returns).</p>
+    <div class="notes">Key engineering detail: settings screens return no result. Use a lifecycle ON_RESUME observer to re-read each permission's state every time the user comes back, and reactively update the checklist. Make step 5 (battery) clearly optional/skippable — it's a per-OEM nag and shouldn't block first run.</div>
+  </section>
+
+  <!-- 7. Media engine -->
+  <section class="slide" data-title="Media engine">
+    <p class="kicker">Phase 2</p>
+    <h2 class="h2">Media engine — listener as the heart</h2>
+    <div class="grid g2 mt-l">
+      <div class="card"><h4>Connect</h4><p class="dim"><code class="k">onListenerConnected()</code> → get MediaSessionManager, register active-sessions listener, register SCREEN_OFF receiver here.</p></div>
+      <div class="card"><h4>Observe</h4><p class="dim">Attach <code class="k">MediaController.Callback</code>: onMetadataChanged, onPlaybackStateChanged. Push into the repo StateFlow.</p></div>
+      <div class="card"><h4>Expose</h4><p class="dim"><code class="k">NowPlaying(title, artist, art, isPlaying, positionMs, durationMs)</code> — an <code class="k">@Immutable</code> data class.</p></div>
+      <div class="card"><h4>Switch</h4><p class="dim">addOnActiveSessionsChangedListener handles app switches (Spotify → Apple Music) — rebind the callback to the new top controller.</p></div>
+    </div>
+    <p class="small mt-l">getActiveSessions() needs your listener's <code class="k">ComponentName</code> as the permission token — pass <code class="k">ComponentName(ctx, MediaListener::class.java)</code>.</p>
+    <div class="notes">Gotcha: getActiveSessions throws SecurityException if notification access isn't granted — guard it. Album art comes from MediaMetadata.METADATA_KEY_ALBUM_ART / ART as a Bitmap, no extra permission. Rebind on session change so the controls always point at whatever is actually playing.</div>
+  </section>
+
+  <!-- 8. Trigger -->
+  <section class="slide" data-title="Trigger">
+    <p class="kicker">Phase 3</p>
+    <h2 class="h2">The screen-off trigger</h2>
+    <div class="grid g2 mt-l">
+      <div class="card"><h4>Register dynamically</h4><p class="dim">ACTION_SCREEN_OFF is a protected broadcast — manifest receivers are ignored. Register in code (in the listener), with <code class="k">RECEIVER_NOT_EXPORTED</code>.</p></div>
+      <div class="card"><h4>Gate on playback</h4><p class="dim">On SCREEN_OFF: if <code class="k">repo.value.isPlaying</code> → fire FSI notification. Else do nothing.</p></div>
+    </div>
+    <p class="small mt-l">Launch order of preference: <b>1)</b> FSI notification (canUseFullScreenIntent) → <b>2)</b> overlay window (canDrawOverlays) → <b>3)</b> plain high-priority notification (last resort, user taps to open).</p>
+    <div class="notes">The three-tier fallback is what makes this robust across OEMs and OS versions. We pick the best available launch channel at runtime based on which permissions the user actually granted. Log which tier fired — invaluable for field debugging.</div>
+  </section>
+
+  <!-- 9. Compose UI -->
+  <section class="slide" data-title="Compose UI">
+    <p class="kicker">Phase 4</p>
+    <h2 class="h2">The Compose lockscreen</h2>
+    <div class="grid g3 mt-l anim-stagger-list" data-anim-target>
+      <div class="card"><h4>Flags first</h4><p class="dim">In onCreate: <code class="k">setShowWhenLocked(true)</code>, <code class="k">setTurnScreenOn(true)</code>, KEEP_SCREEN_ON. Declare TURN_SCREEN_ON in manifest.</p></div>
+      <div class="card"><h4>Ticking progress</h4><p class="dim"><code class="k">LaunchedEffect(isPlaying)</code> loops <code class="k">delay(1000)</code> incrementing position locally; snaps to real position on each state change.</p></div>
+      <div class="card"><h4>Swipe to unlock</h4><p class="dim"><code class="k">detectVerticalDragGestures</code>; past threshold → <code class="k">finish()</code> reveals the real secure keyguard (PIN/pattern).</p></div>
+    </div>
+    <p class="small mt-l">Two themes via a CompositionLocal switch: <b>Minimalist Dark</b> (solid bg) and <b>Glassmorphism</b> (album art as blurred edge-to-edge backdrop using <code class="k">Modifier.blur</code> + scrim).</p>
+    <div class="notes">setShowWhenLocked draws OVER the keyguard — it does NOT bypass PIN. finish() simply removes our activity and the secure keyguard is still there underneath, which is exactly the behavior we want. Follow the compose-performance skill: @Immutable state, hoist the ticker, derive progress with derivedStateOf to avoid recomposing the whole screen every second.</div>
+  </section>
+
+  <!-- 10. Risks -->
+  <section class="slide" data-title="Risks">
+    <p class="kicker">Eyes open</p>
+    <h2 class="h2">Top risks & mitigations</h2>
+    <table class="t">
+      <tr><th>Risk</th><th>Mitigation</th></tr>
+      <tr><td>BAL drops the activity launch</td><td>FSI notification primary path + overlay fallback (slide 8)</td></tr>
+      <tr><td>OEM kills the process (MIUI/Samsung)</td><td>Listener-service anchor + battery-exemption prompt</td></tr>
+      <tr><td>FSI denied on 14+</td><td>canUseFullScreenIntent() check → overlay tier</td></tr>
+      <tr><td>Play Store policy on FGS type</td><td>Prefer listener-anchor (no FGS); if FGS needed, justify type honestly</td></tr>
+      <tr><td>Onboarding friction (3 manual grants)</td><td>Single guided PermissionGate with live status</td></tr>
+      <tr><td>Multiple media apps active</td><td>active-sessions listener picks current top controller</td></tr>
+    </table>
+    <div class="notes">Play Store angle: by anchoring on the NotificationListenerService instead of a foreground service we dodge the FGS-type declaration and review scrutiny entirely. If we ever do need an FGS, mediaPlayback is the honest type only if we actually touch playback — otherwise specialUse with justification.</div>
+  </section>
+
+  <!-- 11. Phased plan -->
+  <section class="slide" data-title="Plan">
+    <p class="kicker">Build order</p>
+    <h2 class="h2">Four phases, approval gate each</h2>
+    <div class="grid g2 mt-l anim-stagger-list" data-anim-target>
+      <div class="card"><h4>Phase 1 · Foundation</h4><p class="dim">Manifest, PermissionGate UI, listener-service skeleton as anchor. <span class="small">Deliverable: app installs, all permissions grantable, status reflects live.</span></p></div>
+      <div class="card"><h4>Phase 2 · Media engine</h4><p class="dim">getActiveSessions, controller callbacks, repo StateFlow. <span class="small">Deliverable: now-playing logs update live across Spotify/Apple Music.</span></p></div>
+      <div class="card"><h4>Phase 3 · Trigger</h4><p class="dim">SCREEN_OFF receiver + 3-tier launch. <span class="small">Deliverable: blank activity appears over lockscreen only when music plays.</span></p></div>
+      <div class="card"><h4>Phase 4 · Compose UI</h4><p class="dim">Ticking progress, swipe-unlock, 2 themes. <span class="small">Deliverable: full sleek lockscreen.</span></p></div>
+    </div>
+    <p class="small mt-l">Each phase ends with a runnable check on a real device + your sign-off before the next.</p>
+  </section>
+
+  <!-- 12. CTA -->
+  <section class="slide center tc" data-title="Decision">
+    <div>
+      <p class="kicker">Your call</p>
+      <h1 class="h1 anim-rise-in" data-anim="rise-in">Approve to start <span class="gradient-text">Phase 1</span></h1>
+      <p class="lede" style="margin:16px auto">One decision needed: <b>accept the FSI-notification launch path</b> over the spec's direct startActivity()?</p>
+      <p class="small">← → navigate · T theme · S notes · F fullscreen</p>
+    </div>
+    <div class="notes">If approved, Phase 1 delivers: AndroidManifest entries, the PermissionGate Compose screen with live status re-polling, and the NotificationListenerService skeleton acting as the process anchor. The only open decision for the user is endorsing the FSI launch mechanism — everything else follows the spec.</div>
+  </section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body>
+</html>
