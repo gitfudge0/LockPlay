@@ -11,7 +11,7 @@ import com.musiclock.ui.lockscreen.skin.SkinOrientation.PORTRAIT
  */
 
 // --- Forced landscape: device-shaped players that read best rotated ---
-val TurntableSkinSpec = PlayerSkin("turntable", "Turntable", LANDSCAPE) { TurntableSkin(it) }
+val TurntableSkinSpec = PlayerSkin("turntable", "Turntable", PORTRAIT) { TurntableSkin(it) }
 val ReelToReelSkinSpec = PlayerSkin("reel", "Reel-to-Reel", LANDSCAPE) { ReelToReelSkin(it) }
 val HiFiVuSkinSpec = PlayerSkin("hifi", "Hi-Fi VU", LANDSCAPE) { HiFiVuSkin(it) }
 val CinematicSkinSpec = PlayerSkin("cinematic", "Cinematic", LANDSCAPE) { CinematicSkin(it) }

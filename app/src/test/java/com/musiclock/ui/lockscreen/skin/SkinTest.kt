@@ -34,7 +34,7 @@ class SkinTest {
     @Test
     fun `device skins are landscape and player-hero skins are portrait`() {
         assertEquals(SkinOrientation.LANDSCAPE, CassetteSkinSpec.orientation)
-        assertEquals(SkinOrientation.LANDSCAPE, TurntableSkinSpec.orientation)
+        assertEquals(SkinOrientation.PORTRAIT, TurntableSkinSpec.orientation)
         assertEquals(SkinOrientation.PORTRAIT, GlassNeonSkinSpec.orientation)
         assertEquals(SkinOrientation.PORTRAIT, MinimalSkinSpec.orientation)
     }
