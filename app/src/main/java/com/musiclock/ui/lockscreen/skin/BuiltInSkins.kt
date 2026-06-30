@@ -20,6 +20,7 @@ val BoomboxSkinSpec = PlayerSkin("boombox", "Boombox", LANDSCAPE) { BoomboxSkin(
 val CassetteSkinSpec = PlayerSkin("cassette", "Cassette", LANDSCAPE) { CassetteSkin(it) }
 
 // --- Portrait: player-hero layouts ---
+val CardSkinSpec = PlayerSkin("card", "Card", PORTRAIT) { CardSkin(it) }
 val GlassNeonSkinSpec = PlayerSkin("glassneon", "Glass Neon", PORTRAIT) { GlassNeonSkin(it) }
 val IpodSkinSpec = PlayerSkin("ipod", "iPod", PORTRAIT) { IpodSkin(it) }
 val DiscmanSkinSpec = PlayerSkin("discman", "Discman", PORTRAIT) { DiscmanSkin(it) }
@@ -35,6 +36,7 @@ val NeumorphicSkinSpec = PlayerSkin("neumorphic", "Neumorphic", PORTRAIT) { Neum
 
 /** Source of truth for selectable skins. Order is the order shown in the picker. */
 val BuiltInSkins: List<PlayerSkin> = listOf(
+    CardSkinSpec,
     GlassNeonSkinSpec, AuroraSkinSpec, MinimalSkinSpec, DiscmanSkinSpec, IpodSkinSpec,
     BrutalistSkinSpec, VaporwaveSkinSpec, TerminalSkinSpec, WinampSkinSpec, WalkmanSkinSpec,
     JukeboxSkinSpec, NeumorphicSkinSpec,
@@ -42,6 +44,6 @@ val BuiltInSkins: List<PlayerSkin> = listOf(
     DjDeckSkinSpec, BoomboxSkinSpec,
 )
 
-val DefaultSkin: PlayerSkin = GlassNeonSkinSpec
+val DefaultSkin: PlayerSkin = CardSkinSpec
 
 fun skinById(id: String?): PlayerSkin = BuiltInSkins.firstOrNull { it.id == id } ?: DefaultSkin
