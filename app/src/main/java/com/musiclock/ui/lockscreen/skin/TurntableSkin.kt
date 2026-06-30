@@ -14,8 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,11 +30,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.sp
  *
  * Dark palette:  bg gradient #5C5230 → #2A2620 → #12100C, ink #EFE9D8.
  * Light palette: bg gradient #D8CFA8 → #B8AD84 → #8F876A, ink #2A2418.
- * Pill tint: #0006 (dark) / #0002 (light).
+ * Pills are dark chips (#0006) with light content in both themes, so they stay legible on the tan deck.
  */
 @Composable
 fun TurntableSkin(scope: SkinScope) {
@@ -67,7 +67,10 @@ fun TurntableSkin(scope: SkinScope) {
     val bgStops = listOf(0f, 0.55f, 1f)
 
     val ink = if (dark) Color(0xFFEFE9D8) else Color(0xFF2A2418)
-    val pillTint = if (dark) Color(0x66000000) else Color(0x22000000)
+    // Dark chips with light content in BOTH themes — translucent-dark on the tan light deck
+    // stayed invisible, so the transport reads as floating dark buttons regardless of mode.
+    val pillTint = Color(0x66000000)
+    val pillContent = Color(0xFFEFE9D8)
     val mutedInk = ink.copy(alpha = 0.70f)
 
     val clock = rememberClockText()
@@ -86,6 +89,7 @@ fun TurntableSkin(scope: SkinScope) {
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
+                .navigationBarsPadding()
                 .padding(horizontal = 24.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -113,10 +117,7 @@ fun TurntableSkin(scope: SkinScope) {
                 contentAlignment = Alignment.Center,
             ) {
                 VinylDisc(scope = scope)
-                ToneArm(
-                    ink = ink,
-                    modifier = Modifier.align(Alignment.TopEnd),
-                )
+                ToneArm(modifier = Modifier.align(Alignment.TopEnd))
             }
 
             Spacer(Modifier.height(20.dp))
@@ -190,7 +191,7 @@ fun TurntableSkin(scope: SkinScope) {
                     Icon(
                         Icons.Rounded.SkipPrevious,
                         contentDescription = "Previous",
-                        tint = ink,
+                        tint = pillContent,
                         modifier = Modifier.size(24.dp),
                     )
                 }
@@ -211,7 +212,7 @@ fun TurntableSkin(scope: SkinScope) {
                 ) {
                     Text(
                         text = if (scope.isPlaying) "PAUSE" else "PLAY",
-                        color = ink,
+                        color = pillContent,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 2.sp,
@@ -230,7 +231,7 @@ fun TurntableSkin(scope: SkinScope) {
                     Icon(
                         Icons.Rounded.SkipNext,
                         contentDescription = "Next",
-                        tint = ink,
+                        tint = pillContent,
                         modifier = Modifier.size(24.dp),
                     )
                 }
@@ -293,23 +294,29 @@ private fun VinylDisc(scope: SkinScope) {
     }
 }
 
-/** Decorative static tonearm — a thin rounded bar angled from the top-right corner. */
+/**
+ * Decorative tonearm, mounted at the top-right corner: a base plate + pivot hub with a counterweight
+ * stub behind it and the arm sweeping down-left to a headshell over the platter. Metallic greys, fixed
+ * across themes (it's hardware, not chrome), so it reads as an arm rather than a floating stick.
+ */
 @Composable
-private fun ToneArm(ink: Color, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.size(90.dp)) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 4.dp, end = 4.dp)
-                .rotate(-30f)
-                .width(6.dp)
-                .height(80.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(
-                    Brush.verticalGradient(
-                        listOf(ink.copy(alpha = 0.85f), ink.copy(alpha = 0.40f))
-                    )
-                ),
-        )
+private fun ToneArm(modifier: Modifier = Modifier) {
+    val metal = Color(0xFFCBCBD2)
+    val metalDark = Color(0xFF45454C)
+    Canvas(modifier = modifier.size(width = 168.dp, height = 232.dp)) {
+        val pivot = Offset(size.width * 0.80f, size.height * 0.17f)
+        val tip = Offset(size.width * 0.30f, size.height * 0.64f)
+        val weight = Offset(size.width * 0.95f, size.height * 0.05f)
+
+        // Base plate under the pivot.
+        drawCircle(metalDark, radius = 17.dp.toPx(), center = pivot)
+        // Counterweight stub poking back toward the corner.
+        drawLine(metalDark, pivot, weight, strokeWidth = 9.dp.toPx(), cap = StrokeCap.Round)
+        drawCircle(metalDark, radius = 10.dp.toPx(), center = weight)
+        // The arm tube reaching in toward the record.
+        drawLine(metal, pivot, tip, strokeWidth = 7.dp.toPx(), cap = StrokeCap.Round)
+        // Pivot cap and headshell.
+        drawCircle(metal, radius = 7.dp.toPx(), center = pivot)
+        drawCircle(metalDark, radius = 6.dp.toPx(), center = tip)
     }
 }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -107,13 +108,15 @@ fun GlassSkin(scope: SkinScope) {
                 .fillMaxWidth()
                 .weight(0.54f)
                 .background(Brush.verticalGradient(listOf(panelStart, panelEnd)))
+                .navigationBarsPadding()
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Times row
+            // Times row hugs the scrubber just above it…
             GlassTimesRow(scope = scope, muted = inkMuted)
 
-            Spacer(Modifier.height(8.dp))
+            // …then the title/controls/volume cluster centres in the remaining space.
+            Spacer(Modifier.weight(1f))
 
             // Title
             Text(
@@ -202,6 +205,8 @@ fun GlassSkin(scope: SkinScope) {
                     ),
                 )
             }
+
+            Spacer(Modifier.weight(1f))
         }
     }
 }
