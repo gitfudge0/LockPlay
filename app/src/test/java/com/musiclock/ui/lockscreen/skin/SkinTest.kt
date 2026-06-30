@@ -9,8 +9,8 @@ class SkinTest {
 
     @Test
     fun `skinById returns the matching skin`() {
-        assertSame(CassetteSkinSpec, skinById("cassette"))
-        assertSame(GlassNeonSkinSpec, skinById("glassneon"))
+        assertSame(CardSkinSpec, skinById("card"))
+        assertSame(GlassSkinSpec, skinById("glass"))
     }
 
     @Test
@@ -32,10 +32,9 @@ class SkinTest {
     }
 
     @Test
-    fun `device skins are landscape and player-hero skins are portrait`() {
-        assertEquals(SkinOrientation.LANDSCAPE, CassetteSkinSpec.orientation)
+    fun `all three built-in skins are portrait`() {
+        assertEquals(SkinOrientation.PORTRAIT, CardSkinSpec.orientation)
         assertEquals(SkinOrientation.PORTRAIT, TurntableSkinSpec.orientation)
-        assertEquals(SkinOrientation.PORTRAIT, GlassNeonSkinSpec.orientation)
-        assertEquals(SkinOrientation.PORTRAIT, MinimalSkinSpec.orientation)
+        assertEquals(SkinOrientation.PORTRAIT, GlassSkinSpec.orientation)
     }
 }
