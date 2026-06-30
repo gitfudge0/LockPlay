@@ -5,15 +5,12 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
-import android.content.Context
-import android.media.AudioManager
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -24,10 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import java.time.LocalTime
 import kotlinx.coroutines.delay
-import kotlin.math.roundToInt
 
 /**
  * Small, skin-agnostic building blocks shared by the player skins. Anything bigger or design-specific
@@ -64,36 +59,6 @@ fun rememberClockText(): String {
         }
     }
     return formatClock(now.hour, now.minute)
-}
-
-/**
- * Current device media volume as a 0f..1f fraction plus a setter. Reflects hardware-button changes
- * by re-reading [AudioManager] on a short poll; the setter applies immediately so the slider
- * doesn't lag the drag.
- */
-@Composable
-fun rememberDeviceVolume(): Pair<Float, (Float) -> Unit> {
-    val context = LocalContext.current
-    val audio = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
-    val max = remember { audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
-    var current by remember { mutableIntStateOf(audio.getStreamVolume(AudioManager.STREAM_MUSIC)) }
-    LaunchedEffect(Unit) {
-        // ponytail: 500ms poll for hardware-button changes; swap to a VOLUME_CHANGED_ACTION
-        // receiver if this ever shows up in battery traces.
-        while (true) {
-            current = audio.getStreamVolume(AudioManager.STREAM_MUSIC)
-            delay(500)
-        }
-    }
-    // Memoized so passing it to a slider child doesn't churn that child on every poll tick.
-    val set = remember(audio, max) {
-        { frac: Float ->
-            val level = (frac.coerceIn(0f, 1f) * max).roundToInt()
-            audio.setStreamVolume(AudioManager.STREAM_MUSIC, level, 0)
-            current = level
-        }
-    }
-    return volumeFraction(current, max) to set
 }
 
 /** Progress fraction in 0f..1f for the ticking [SkinScope.position] against the track duration. */

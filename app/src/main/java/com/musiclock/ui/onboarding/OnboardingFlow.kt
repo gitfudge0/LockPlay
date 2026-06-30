@@ -14,6 +14,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -34,7 +36,9 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Icon
+import android.content.res.Configuration
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,8 +53,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -238,7 +247,8 @@ private fun WelcomeStep(skin: PlayerSkin, onStart: () -> Unit) {
         bodyArrangement = Arrangement.spacedBy(AppTheme.spacing.md, Alignment.Top),
         bottom = { AppButton(label = "Get started", onClick = onStart, block = true, size = ButtonSize.Lg) },
     ) {
-        // Peek flexes to fill the space above the copy, so the CTA always stays on screen.
+        // Peek flexes to fill the space above the copy; the taller it is, the wider the (height-fit)
+        // player mock renders, so let it take the full flex.
         LockscreenPeek(skin = skin, modifier = Modifier.weight(1f))
         AppText("MUSICLOCK", AppTheme.typography.label, color = AppTheme.colors.accentOnSurface)
         AppText("Your music, on your lockscreen.", AppTheme.typography.display, color = AppTheme.colors.textPrimary)
@@ -247,6 +257,8 @@ private fun WelcomeStep(skin: PlayerSkin, onStart: () -> Unit) {
             AppTheme.typography.body,
             color = AppTheme.colors.textSecondary,
         )
+        // Extra breathing room between the copy and the bottom-pinned "Get started" button.
+        Spacer(Modifier.height(AppTheme.spacing.lg))
     }
 }
 
@@ -584,6 +596,22 @@ private fun PulseDot() {
     )
 }
 
+/** A warm diagonal-gradient stand-in cover so the preview's art reads as a real album, not a blank. */
+private fun sampleAlbumArt(): android.graphics.Bitmap {
+    val size = 512
+    val bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+    android.graphics.Canvas(bmp).drawPaint(
+        android.graphics.Paint().apply {
+            shader = android.graphics.LinearGradient(
+                0f, 0f, size.toFloat(), size.toFloat(),
+                intArrayOf(0xFFE8552E.toInt(), 0xFFF5853F.toInt(), 0xFFF0B429.toInt()),
+                null, android.graphics.Shader.TileMode.CLAMP,
+            )
+        },
+    )
+    return bmp
+}
+
 /** A live preview of [skin] with a sample track, fading into the surface at the bottom. */
 @Composable
 private fun LockscreenPeek(skin: PlayerSkin, modifier: Modifier = Modifier) {
@@ -592,6 +620,7 @@ private fun LockscreenPeek(skin: PlayerSkin, modifier: Modifier = Modifier) {
             isActive = true,
             title = "Midnight City",
             artist = "M83",
+            albumArt = sampleAlbumArt(),
             isPlaying = true,
             positionMs = 78_000L,
             durationMs = 240_000L,
@@ -602,25 +631,70 @@ private fun LockscreenPeek(skin: PlayerSkin, modifier: Modifier = Modifier) {
             onSeek = {}, onPrev = {}, onPlayPause = {}, onNext = {},
         )
     }
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(AppTheme.shapes.large),
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) { skin.content(sampleScope) }
-        // Bottom fade into the app surface so the peek reads as embedded, not a full screen. Kept to
-        // the bottom edge only — starting it higher washed over the skin's title/artist and dropped
-        // them below a readable contrast.
+    // The skins are full-screen portrait layouts designed for a real screen, so rendering them small
+    // makes their text wrap. Instead render the skin at TRUE device size and scale the whole thing
+    // down (graphicsLayer) into a phone-shaped frame — the layout is identical to the real screen,
+    // just smaller, so nothing wraps.
+    val config = LocalConfiguration.current
+    val screenW = config.screenWidthDp.dp
+    val screenH = config.screenHeightDp.dp
+    // Force the skin's LIGHT palette for the preview: the dark palette (#0E0E12) is indistinguishable
+    // from the near-black onboarding surface, so the mock reads as blank. A light card pops as a
+    // recognisable phone screen.
+    val lightConfig = remember(config) {
+        Configuration(config).apply {
+            uiMode = (uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or Configuration.UI_MODE_NIGHT_NO
+        }
+    }
+    val density = LocalDensity.current
+    BoxWithConstraints(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        // Phone-shaped frame sized to the available HEIGHT, so the WHOLE design — through the
+        // transport controls at the bottom — fits with no crop. Width follows the device aspect;
+        // centered horizontally.
+        val frameH = maxHeight
+        val frameW = frameH * (config.screenWidthDp.toFloat() / config.screenHeightDp)
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0.9f to androidx.compose.ui.graphics.Color.Transparent,
-                        1f to AppTheme.colors.surface,
+                .size(frameW, frameH)
+                // Round only the top — the bottom fades straight into the surface, so a rounded
+                // bottom edge would read as a floating card rather than a peek.
+                .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    // Measure the skin at TRUE device pixels (so it lays out exactly like a real
+                    // screen — no wrapping), then scale to the frame HEIGHT so it all fits.
+                    .layout { measurable, constraints ->
+                        val screenWpx = with(density) { screenW.roundToPx() }
+                        val screenHpx = with(density) { screenH.roundToPx() }
+                        val scale = constraints.maxHeight.toFloat() / screenHpx
+                        val placeable = measurable.measure(Constraints.fixed(screenWpx, screenHpx))
+                        layout(constraints.maxWidth, constraints.maxHeight) {
+                            placeable.placeWithLayer(0, 0) {
+                                scaleX = scale
+                                scaleY = scale
+                                transformOrigin = TransformOrigin(0f, 0f)
+                            }
+                        }
+                    },
+            ) {
+                CompositionLocalProvider(LocalConfiguration provides lightConfig) {
+                    skin.content(sampleScope)
+                }
+            }
+            // Subtle bottom fade so the mock reads as embedded in the surface.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0.92f to androidx.compose.ui.graphics.Color.Transparent,
+                            1f to AppTheme.colors.surface,
+                        ),
                     ),
-                ),
-        )
+            )
+        }
     }
 }
 

@@ -20,14 +20,11 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -63,10 +60,8 @@ fun GlassSkin(scope: SkinScope) {
     val panelEnd = if (dark) Color(0xFF11131A) else Color(0xFFDFE3EE)
     val ink = if (dark) Color(0xFFE7EBF6) else Color(0xFF1C2333)
     val inkMuted = ink.copy(alpha = 0.6f)
-    val inkVolume = ink.copy(alpha = 0.85f)
 
     val clock = rememberClockText()
-    val (vol, setVol) = rememberDeviceVolume()
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Art section — top 46%
@@ -115,7 +110,7 @@ fun GlassSkin(scope: SkinScope) {
             // Times row hugs the scrubber just above it…
             GlassTimesRow(scope = scope, muted = inkMuted)
 
-            // …then the title/controls/volume cluster centres in the remaining space.
+            // …then the title/controls cluster centres in the remaining space.
             Spacer(Modifier.weight(1f))
 
             // Title
@@ -177,32 +172,6 @@ fun GlassSkin(scope: SkinScope) {
                         .size(26.dp)
                         .clip(CircleShape)
                         .clickable(onClick = scope.onNext),
-                )
-            }
-
-            Spacer(Modifier.height(20.dp))
-
-            // Volume row: icon + slider
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Rounded.VolumeUp,
-                    contentDescription = null,
-                    tint = inkVolume,
-                    modifier = Modifier.size(18.dp),
-                )
-                Slider(
-                    value = vol,
-                    onValueChange = setVol,
-                    modifier = Modifier.weight(1f),
-                    colors = SliderDefaults.colors(
-                        thumbColor = inkVolume,
-                        activeTrackColor = inkVolume,
-                        inactiveTrackColor = inkVolume.copy(alpha = 0.25f),
-                    ),
                 )
             }
 

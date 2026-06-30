@@ -19,12 +19,9 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -47,9 +44,9 @@ import androidx.compose.ui.unit.sp
 
 /**
  * Turntable (portrait, variant B) — a warm vinyl-deck lockscreen: a spinning 230dp vinyl disc with
- * circular album art at its centre, a decorative tonearm, bottom-aligned track meta, device volume
- * slider, and a pill-based transport row. Colours are resolved locally from a two-palette light/dark
- * set; AppTheme / MaterialTheme tokens are intentionally ignored.
+ * circular album art at its centre, a decorative tonearm, bottom-aligned track meta, and a
+ * pill-based transport row. Colours are resolved locally from a two-palette light/dark set;
+ * AppTheme / MaterialTheme tokens are intentionally ignored.
  *
  * Dark palette:  bg gradient #5C5230 → #2A2620 → #12100C, ink #EFE9D8.
  * Light palette: bg gradient #D8CFA8 → #B8AD84 → #8F876A, ink #2A2418.
@@ -74,7 +71,6 @@ fun TurntableSkin(scope: SkinScope) {
     val mutedInk = ink.copy(alpha = 0.70f)
 
     val clock = rememberClockText()
-    val (vol, setVol) = rememberDeviceVolume()
 
     Box(
         modifier = Modifier
@@ -146,32 +142,6 @@ fun TurntableSkin(scope: SkinScope) {
             }
 
             Spacer(Modifier.height(20.dp))
-
-            // Volume row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Rounded.VolumeUp,
-                    contentDescription = null,
-                    tint = mutedInk,
-                    modifier = Modifier.size(18.dp),
-                )
-                Slider(
-                    value = vol,
-                    onValueChange = setVol,
-                    modifier = Modifier.weight(1f),
-                    colors = SliderDefaults.colors(
-                        thumbColor = ink,
-                        activeTrackColor = ink,
-                        inactiveTrackColor = ink.copy(alpha = 0.25f),
-                    ),
-                )
-            }
-
-            Spacer(Modifier.height(12.dp))
 
             // Controls: square prev | wide play/pause pill | square next
             Row(

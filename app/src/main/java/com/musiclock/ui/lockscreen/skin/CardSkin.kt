@@ -26,10 +26,7 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
-import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -52,10 +49,9 @@ import kotlin.math.sin
 
 /**
  * Card (portrait, variant A) — a clean, light/dark card layout: centered album art with rounded
- * corners, large title, a stylised bar-meter seek strip, standard transport row, and a device
- * volume slider. All colours are resolved locally from a two-palette (light/dark) set; AppTheme /
- * MaterialTheme tokens are intentionally ignored so the skin looks identical regardless of app
- * theming.
+ * corners, large title, a stylised bar-meter seek strip, and a standard transport row. All colours
+ * are resolved locally from a two-palette (light/dark) set; AppTheme / MaterialTheme tokens are
+ * intentionally ignored so the skin looks identical regardless of app theming.
  *
  * Light palette: bg #FBFBFD, ink #14141A.
  * Dark palette:  bg #0E0E12, ink #F3F3F6.
@@ -85,7 +81,6 @@ fun CardSkin(scope: SkinScope) {
     val circleIcon = if (dark) Color(0xFF0E0E12) else Color(0xFFFBFBFD)
 
     val clock = rememberClockText()
-    val (vol, setVol) = rememberDeviceVolume()
 
     Box(
         modifier = Modifier
@@ -100,24 +95,7 @@ fun CardSkin(scope: SkinScope) {
                 .padding(horizontal = 26.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Status row: clock left, spacer right
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = clock,
-                    color = ink,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Spacer(Modifier.size(24.dp))
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            // Top bar: chevron-down left, "Now Playing" centered (no right icon)
+            // Top bar: chevron-down left, "Now Playing" centered, clock right
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -136,7 +114,12 @@ fun CardSkin(scope: SkinScope) {
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f),
                 )
-                Spacer(Modifier.size(24.dp))
+                Text(
+                    text = clock,
+                    color = ink,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
 
             Spacer(Modifier.height(20.dp))
@@ -223,32 +206,6 @@ fun CardSkin(scope: SkinScope) {
                         .size(22.dp)
                         .clip(CircleShape)
                         .clickable(onClick = scope.onNext),
-                )
-            }
-
-            Spacer(Modifier.height(20.dp))
-
-            // Volume row: icon + slider
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Rounded.VolumeUp,
-                    contentDescription = null,
-                    tint = MutedColor,
-                    modifier = Modifier.size(18.dp),
-                )
-                Slider(
-                    value = vol,
-                    onValueChange = setVol,
-                    modifier = Modifier.weight(1f),
-                    colors = SliderDefaults.colors(
-                        thumbColor = MutedColor,
-                        activeTrackColor = MutedColor,
-                        inactiveTrackColor = MutedColor.copy(alpha = 0.25f),
-                    ),
                 )
             }
         }
