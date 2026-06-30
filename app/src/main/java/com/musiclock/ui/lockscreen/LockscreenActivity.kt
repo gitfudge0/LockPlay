@@ -50,7 +50,8 @@ class LockscreenActivity : ComponentActivity() {
             val vm: LockscreenViewModel = viewModel()
             val state by vm.state.collectAsStateWithLifecycle()
 
-            // Force the orientation the active skin was designed for (e.g. landscape cassette/turntable).
+            // Force the orientation the active skin was designed for. The built-in skins are all
+            // portrait today; the LANDSCAPE arm stays for any future device-shaped skin.
             LaunchedEffect(skin.orientation) {
                 requestedOrientation = when (skin.orientation) {
                     SkinOrientation.PORTRAIT -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT

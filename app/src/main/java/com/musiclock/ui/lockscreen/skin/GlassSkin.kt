@@ -210,7 +210,7 @@ fun GlassSkin(scope: SkinScope) {
 @Composable
 private fun GlassScrubber(scope: SkinScope, modifier: Modifier = Modifier) {
     val fraction by remember(scope) { derivedStateOf { scope.progressFraction() } }
-    val duration = scope.durationMs.coerceAtLeast(1L)
+    val duration = scope.durationMs
 
     Box(
         modifier = modifier
@@ -218,7 +218,8 @@ private fun GlassScrubber(scope: SkinScope, modifier: Modifier = Modifier) {
             .height(3.dp)
             .pointerInput(duration) {
                 detectTapGestures { offset ->
-                    scope.onSeek((offset.x / size.width * duration).toLong())
+                    // Seek only when duration is known (live streams report 0).
+                    if (duration > 0) scope.onSeek((offset.x / size.width * duration).toLong())
                 }
             },
         contentAlignment = Alignment.CenterStart,

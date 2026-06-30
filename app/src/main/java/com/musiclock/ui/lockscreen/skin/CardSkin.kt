@@ -262,19 +262,21 @@ fun CardSkin(scope: SkinScope) {
  */
 @Composable
 private fun CardBarMeter(scope: SkinScope, ink: Color) {
-    val fraction by remember { derivedStateOf { scope.progressFraction() } }
-    val duration = scope.durationMs.coerceAtLeast(1L)
+    // Key on scope: a track change hands in a new SkinScope, and durationMs is a plain value
+    // (not Compose state) — a keyless remember would keep dividing by the old track's length.
+    val fraction by remember(scope) { derivedStateOf { scope.progressFraction() } }
+    val duration = scope.durationMs
     val faintColor = ink.copy(alpha = 0.15f)
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Bar strip — tappable to seek
+        // Bar strip — tappable to seek, but only when the duration is known (live streams report 0).
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)
                 .pointerInput(duration) {
                     detectTapGestures { offset ->
-                        scope.onSeek((offset.x / size.width * duration).toLong())
+                        if (duration > 0) scope.onSeek((offset.x / size.width * duration).toLong())
                     }
                 },
             horizontalArrangement = Arrangement.spacedBy(2.dp),
