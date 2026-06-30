@@ -21,6 +21,7 @@ val CassetteSkinSpec = PlayerSkin("cassette", "Cassette", LANDSCAPE) { CassetteS
 
 // --- Portrait: player-hero layouts ---
 val CardSkinSpec = PlayerSkin("card", "Card", PORTRAIT) { CardSkin(it) }
+val GlassSkinSpec = PlayerSkin("glass", "Glass", PORTRAIT) { GlassSkin(it) }
 val GlassNeonSkinSpec = PlayerSkin("glassneon", "Glass Neon", PORTRAIT) { GlassNeonSkin(it) }
 val IpodSkinSpec = PlayerSkin("ipod", "iPod", PORTRAIT) { IpodSkin(it) }
 val DiscmanSkinSpec = PlayerSkin("discman", "Discman", PORTRAIT) { DiscmanSkin(it) }
@@ -37,7 +38,7 @@ val NeumorphicSkinSpec = PlayerSkin("neumorphic", "Neumorphic", PORTRAIT) { Neum
 /** Source of truth for selectable skins. Order is the order shown in the picker. */
 val BuiltInSkins: List<PlayerSkin> = listOf(
     CardSkinSpec,
-    GlassNeonSkinSpec, AuroraSkinSpec, MinimalSkinSpec, DiscmanSkinSpec, IpodSkinSpec,
+    GlassSkinSpec, GlassNeonSkinSpec, AuroraSkinSpec, MinimalSkinSpec, DiscmanSkinSpec, IpodSkinSpec,
     BrutalistSkinSpec, VaporwaveSkinSpec, TerminalSkinSpec, WinampSkinSpec, WalkmanSkinSpec,
     JukeboxSkinSpec, NeumorphicSkinSpec,
     CassetteSkinSpec, TurntableSkinSpec, ReelToReelSkinSpec, HiFiVuSkinSpec, CinematicSkinSpec,
