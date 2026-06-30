@@ -1,251 +1,299 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MusicLock — Onboarding Flow</title>
+<title>MusicLock — Player Skins</title>
 <style>
-  /* MinimalistDark tokens (app/src/.../design/BuiltInThemes.kt) */
+  /* ---- shared tokens (flip with data-theme) ------------------------------ */
   :root{
-    --bg:#0C0C10; --surface:#16161C; --surfaceVariant:#22222B;
-    --primary:#8B7CFF; --onPrimary:#0C0C10; --accent:#8B7CFF;
-    --textPrimary:#F5F5F7; --textSecondary:#B0B0BA; --textTertiary:#6E6E78;
-    --r-sm:8px; --r-md:16px; --r-lg:28px; --pill:999px;
-    /* spacing scale: xs4 sm8 md16 lg24 xl32 xxl48 */
+    --page:#050507; --ink:#F5F5F7; --sub:#9a9aa6; --chip:#16161c;
   }
+  html[data-theme="light"]{ --page:#e9eaee; --ink:#15151a; --sub:#5a5a66; --chip:#fff; }
+
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:#050507;color:var(--textPrimary);-webkit-font-smoothing:antialiased;
-    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px 80px}
-  .pagehead{text-align:center;margin-bottom:28px}
-  .pagehead h1{font-size:22px;font-weight:800;letter-spacing:-.4px}
-  .pagehead p{color:#777;font-size:13px;margin-top:6px}
+    background:var(--page);color:var(--ink);-webkit-font-smoothing:antialiased;
+    min-height:100vh;padding:32px 24px 80px;transition:background .25s,color .25s}
+  .head{text-align:center;margin-bottom:8px}
+  .head h1{font-size:22px;font-weight:800;letter-spacing:-.4px}
+  .head p{color:var(--sub);font-size:13px;margin-top:6px}
+  .toggle{display:flex;justify-content:center;margin:18px 0 34px}
+  .toggle button{background:var(--chip);color:var(--ink);border:1px solid #8884;
+    border-radius:999px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer}
+  .grid{display:flex;flex-wrap:wrap;gap:40px 32px;justify-content:center;align-items:flex-start}
+  .cell{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .tag{font-size:13px;font-weight:700;color:var(--ink)}
+  .note{font-size:12px;color:var(--sub);max-width:300px;text-align:center;line-height:1.45}
 
   /* phone chassis */
-  .phone{width:320px;height:680px;border-radius:46px;padding:11px;background:#000;
-    box-shadow:0 0 0 2px #2a2a32,0 24px 60px #000c;position:relative}
-  .notch{position:absolute;top:15px;left:50%;transform:translateX(-50%);width:96px;height:24px;background:#000;border-radius:14px;z-index:50}
-  .screen{width:100%;height:100%;border-radius:36px;overflow:hidden;position:relative;background:var(--bg)}
+  .phone{width:300px;height:640px;border-radius:44px;padding:10px;background:#000;
+    box-shadow:0 0 0 2px #2a2a32,0 24px 60px #0009;position:relative}
+  .notch{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:88px;height:22px;
+    background:#000;border-radius:13px;z-index:60}
+  .screen{width:100%;height:100%;border-radius:35px;overflow:hidden;position:relative;display:flex;flex-direction:column}
 
-  /* page (onboarding step) fills screen */
-  .page{position:absolute;inset:0;display:none;flex-direction:column;padding:54px 26px 22px}
-  .page.active{display:flex}
+  /* status bar (current time lives here) */
+  .status{display:flex;justify-content:space-between;align-items:center;
+    padding:16px 26px 0;font-size:14px;font-weight:600;z-index:5}
+  .status .right{display:flex;gap:6px;align-items:center;opacity:.85}
 
-  /* progress dots */
-  .dots{display:flex;gap:6px;justify-content:center;margin-bottom:22px}
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--surfaceVariant);transition:.2s}
-  .dot.on{background:var(--accent);width:20px;border-radius:4px}
+  svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
+  .ico{display:flex;align-items:center;justify-content:center;cursor:pointer}
 
-  .icon{width:72px;height:72px;border-radius:20px;background:var(--surfaceVariant);
-    display:flex;align-items:center;justify-content:center;font-size:34px;margin:0 auto 22px}
-  .ptitle{font-size:23px;font-weight:800;letter-spacing:-.4px;text-align:center;line-height:1.2}
-  .what{color:var(--textSecondary);font-size:15px;line-height:1.55;text-align:center;margin-top:14px}
-  .why{background:var(--surface);border-radius:var(--r-md);padding:14px 16px;margin-top:20px;
-    display:flex;gap:10px;align-items:flex-start}
-  .why .b{color:var(--accent);font-size:13px;font-weight:700;flex-shrink:0;letter-spacing:.5px;text-transform:uppercase;margin-top:1px}
-  .why p{color:var(--textSecondary);font-size:13.5px;line-height:1.5}
+  /* volume row, reused */
+  .vol{display:flex;align-items:center;gap:10px}
+  .vol .track{flex:1;height:4px;border-radius:2px;background:currentColor;opacity:.25;position:relative}
+  .vol .fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:currentColor;opacity:1}
+  .vol .fill::after{content:"";position:absolute;right:-5px;top:50%;width:11px;height:11px;
+    border-radius:50%;background:currentColor;transform:translateY(-50%)}
 
-  .chip{display:inline-flex;align-items:center;gap:6px;align-self:center;margin-top:18px;
-    background:var(--surfaceVariant);color:var(--textTertiary);font-size:12px;font-weight:600;
-    padding:6px 14px;border-radius:var(--pill)}
-  .chip.req{color:var(--textSecondary)}
-  .chip.opt{color:var(--textTertiary)}
-  .chip.ok{color:var(--accent)}
+  /* ====================================================================== */
+  /* A · CARD  (light/clean, waveform)                                       */
+  /* ====================================================================== */
+  .A{background:#fbfbfd;color:#14141a}
+  html[data-theme="dark"] .A{background:#0e0e12;color:#f3f3f6}
+  .A .topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 24px 4px;font-size:15px;font-weight:700;margin-top:4px}
+  .A .art{margin:14px 26px 0;border-radius:26px;aspect-ratio:1;background-size:cover;background-position:center;
+    box-shadow:0 18px 40px #0003}
+  .A .meta{text-align:center;margin-top:22px;position:relative;padding:0 26px}
+  .A .meta h2{font-size:26px;font-weight:800;letter-spacing:-.5px}
+  .A .meta .ar{color:#9a9aa6;font-size:15px;margin-top:4px}
+  .A .meta .heart{position:absolute;left:26px;top:4px;color:#bbb}
+  .A .meta .more{position:absolute;right:26px;top:8px;color:#bbb;letter-spacing:2px;font-weight:800}
+  .A .wave{display:flex;align-items:center;gap:2px;height:34px;margin:22px 26px 0}
+  .A .wave i{flex:1;border-radius:2px;background:#d4d4dc;display:block}
+  html[data-theme="dark"] .A .wave i{background:#33333d}
+  .A .wave i.on{background:#14141a}
+  html[data-theme="dark"] .A .wave i.on{background:#f3f3f6}
+  .A .times{display:flex;justify-content:space-between;font-size:12px;color:#9a9aa6;margin:8px 26px 0}
+  .A .ctrls{display:flex;align-items:center;justify-content:center;gap:36px;margin:18px 30px 0}
+  .A .ctrls .play{width:64px;height:64px;border-radius:50%;background:#14141a;color:#fff;flex:none}
+  html[data-theme="dark"] .A .ctrls .play{background:#f3f3f6;color:#0e0e12}
+  .A .ctrls svg.i{width:22px;height:22px}
+  .A .ctrls .play svg.i{width:26px;height:26px}
+  .A .volwrap{margin:22px 30px 0;color:#9a9aa6}
 
-  .spacer{flex:1}
+  /* ====================================================================== */
+  /* B · TURNTABLE (vinyl)                                                   */
+  /* ====================================================================== */
+  .B{background:linear-gradient(180deg,#5c5230,#2a2620 55%,#12100c);color:#efe9d8}
+  html[data-theme="light"] .B{background:linear-gradient(180deg,#d8cfa8,#b8ad84 55%,#8f876a);color:#2a2418}
+  .B .deck{flex:1;position:relative;display:flex;align-items:center;justify-content:center;margin-top:6px}
+  .B .vinyl{width:230px;height:230px;border-radius:50%;
+    background:radial-gradient(circle at 50% 50%,#111 0 33%,#1c1c1c 33% 34%,#141414 34% 100%);
+    box-shadow:0 14px 40px #0008,inset 0 0 0 1px #0006;position:relative;
+    display:flex;align-items:center;justify-content:center;animation:spin 8s linear infinite}
+  html[data-theme="light"] .B .vinyl{animation-play-state:paused}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .B .vinyl::before{content:"";position:absolute;inset:18px;border-radius:50%;
+    border:1px solid #ffffff10;box-shadow:0 0 0 14px #ffffff06,0 0 0 30px #ffffff05}
+  .B .label{width:120px;height:120px;border-radius:50%;background-size:cover;background-position:center;
+    box-shadow:0 0 0 3px #0008,0 4px 10px #0006}
+  .B .arm{position:absolute;top:24px;right:30px;width:9px;height:150px;background:#bbb;border-radius:5px;
+    transform-origin:top right;transform:rotate(22deg);box-shadow:0 2px 6px #0007}
+  .B .arm::after{content:"";position:absolute;bottom:-10px;left:-7px;width:24px;height:26px;background:#333;border-radius:5px}
+  .B .meta{padding:0 26px 4px}
+  .B .meta h2{font-size:24px;font-weight:800}
+  .B .meta .ar{opacity:.7;font-size:15px;margin-top:2px}
+  .B .volwrap{padding:14px 26px 0}
+  .B .ctrls{display:flex;align-items:center;gap:14px;padding:16px 22px 26px}
+  .B .pill{flex:1;height:46px;border-radius:14px;background:#0006;display:flex;align-items:center;
+    justify-content:center;font-size:13px;font-weight:700;letter-spacing:1px;color:inherit;backdrop-filter:blur(6px)}
+  html[data-theme="light"] .B .pill{background:#0002}
+  .B .pill.sq{flex:none;width:58px}
 
-  /* primary action inside a step (the grant button) */
-  .grant{width:100%;height:50px;border:none;border-radius:var(--r-md);background:var(--primary);
-    color:var(--onPrimary);font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px}
-  .grant.done{background:var(--surfaceVariant);color:var(--accent);cursor:default}
+  /* ====================================================================== */
+  /* C · GLASS (photo + frosted panel)                                       */
+  /* ====================================================================== */
+  .C{background:#11131a}
+  .C .photo{height:46%;background-size:cover;background-position:center;position:relative}
+  .C .photo .scrub{position:absolute;left:0;right:0;bottom:0;height:3px;background:#ffffff40}
+  .C .photo .scrub i{display:block;height:100%;width:18%;background:#ff5a5f;position:relative}
+  .C .photo .scrub i::after{content:"";position:absolute;right:-2px;top:-3px;width:4px;height:9px;background:#ff5a5f;border-radius:2px}
+  .C .panel{flex:1;background:linear-gradient(180deg,#eef0f6,#dfe3ee);color:#1c2333;
+    padding:14px 26px 22px;display:flex;flex-direction:column}
+  html[data-theme="dark"] .C .panel{background:linear-gradient(180deg,#1b1e29,#11131a);color:#e7ebf6}
+  .C .times{display:flex;justify-content:space-between;font-size:12px;opacity:.6;font-weight:600}
+  .C .meta{text-align:center;margin-top:14px}
+  .C .meta h2{font-size:20px;font-weight:800}
+  .C .meta .ar{opacity:.6;font-size:13px;margin-top:3px}
+  .C .ctrls{display:flex;align-items:center;justify-content:center;gap:48px;margin-top:auto;padding:18px 4px 4px}
+  .C .ctrls svg.i{width:26px;height:26px;stroke-width:2.4}
+  .C .ctrls .play svg.i{width:34px;height:34px}
+  .C .volwrap{margin-top:18px;opacity:.85}
+  .C .foot{display:flex;align-items:center;justify-content:space-between;margin-top:16px;opacity:.55}
+  .C .foot svg.i{width:20px;height:20px}
 
-  /* nav row */
-  .nav{display:flex;gap:12px;align-items:center}
-  .nav button{height:46px;border-radius:var(--r-md);font-size:14px;font-weight:700;cursor:pointer;border:none}
-  .back{background:transparent;color:var(--textSecondary);border:1px solid var(--surfaceVariant)!important;padding:0 18px}
-  .next{background:var(--primary);color:var(--onPrimary);flex:1}
-  .next.disabled{background:var(--surfaceVariant);color:var(--textTertiary);cursor:not-allowed}
-  .skip{background:transparent;color:var(--textTertiary);font-size:13px;padding:0 8px}
-
-  /* splash */
-  .splash{align-items:center;justify-content:center;text-align:center;padding:0}
-  .logo{width:96px;height:96px;border-radius:26px;background:linear-gradient(150% 140% at 30% 10%,#3a2a8a,var(--surface));
-    display:flex;align-items:center;justify-content:center;font-size:46px;margin-bottom:20px;box-shadow:0 14px 40px #8b7cff44}
-  .splash h2{font-size:26px;font-weight:800;letter-spacing:-.5px}
-  .splash .v{color:var(--textTertiary);font-size:12px;margin-top:6px;letter-spacing:2px;text-transform:uppercase}
-  .route{position:absolute;bottom:34px;left:0;right:0;color:var(--textTertiary);font-size:11px;text-align:center;line-height:1.5;padding:0 30px}
-
-  /* welcome hero */
-  .welcome{align-items:center;text-align:center}
-  .welcome .hero{font-size:60px;margin:30px 0 10px}
-
-  /* pick-a-look pickers */
-  .seclabel{font-size:13px;font-weight:700;color:var(--textSecondary);margin:0 0 10px;letter-spacing:.3px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
-  .pcard{border:1px solid var(--surfaceVariant);border-radius:var(--r-md);padding:12px;cursor:pointer;transition:.15s}
-  .pcard.sel{border-color:var(--accent);border-width:2px;padding:11px}
-  .pcard .n{font-size:13px;font-weight:600;color:var(--textPrimary)}
-  .pcard.sel .n{color:var(--accent)}
-  .pcard .o{font-size:11px;color:var(--textTertiary);margin-top:3px}
-  .scrollarea{overflow-y:auto;flex:1;margin:0 -4px;padding:0 4px}
-  .scrollarea::-webkit-scrollbar{width:0}
-
-  /* done */
-  .done-pg{align-items:center;text-align:center;justify-content:center}
-  .check{width:88px;height:88px;border-radius:50%;background:var(--surfaceVariant);
-    display:flex;align-items:center;justify-content:center;font-size:42px;color:var(--accent);margin-bottom:24px}
+  /* ====================================================================== */
+  /* D · FLOATING (airy controls over photo)                                 */
+  /* ====================================================================== */
+  .D{background:#7fa8d8}
+  .D .sky{position:absolute;inset:0;background-size:cover;background-position:center}
+  /* floats over artwork, so chrome stays white-on-photo in both themes.
+     the theme toggle instead changes the readability scrim behind it. */
+  .D .ovl{position:relative;z-index:2;padding:0 30px;margin-top:34%;color:#fff;text-shadow:0 1px 6px #0006}
+  .D .scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,#0000 30%,#0007 60%,#0009)}
+  html[data-theme="light"] .D .scrim{background:linear-gradient(180deg,#0000 35%,#0004 60%,#0006)}
+  .D .hearts{display:flex;justify-content:space-between;margin-bottom:14px}
+  .D .hearts svg.i{width:22px;height:22px}
+  .D .slider{height:3px;border-radius:2px;background:currentColor;opacity:.5;position:relative;margin-bottom:6px}
+  .D .slider i{position:absolute;left:0;top:0;bottom:0;width:32%;background:currentColor;border-radius:2px;opacity:1}
+  .D .slider i::after{content:"";position:absolute;right:-5px;top:50%;width:11px;height:11px;border-radius:50%;background:#fff;
+    transform:translateY(-50%);box-shadow:0 0 0 1px #0002}
+  .D .times{display:flex;justify-content:space-between;font-size:11px;opacity:.85;margin-bottom:16px}
+  .D .ctrls{display:flex;align-items:center;justify-content:center;gap:42px}
+  .D .ctrls svg.i{width:24px;height:24px}
+  .D .ctrls .play svg.i{width:40px;height:40px;fill:currentColor;stroke:none}
+  .D .volwrap{margin-top:24px;color:#fff;opacity:.9}
 </style>
 </head>
 <body>
-  <div class="pagehead">
-    <h1>MusicLock · Onboarding</h1>
-    <p>Splash → Welcome → 4 permission pages → battery (optional) → Pick a look → Done. Drive it with the buttons inside the phone.</p>
+  <div class="head">
+    <h1>MusicLock · Player Skins</h1>
+    <p>Four lockscreen players, showing only what the app really gets from the media notification:
+       art · title · artist · play state · position/duration · device volume · clock.<br>
+       No like/album/queue — those aren't in the session data.</p>
   </div>
+  <div class="toggle"><button id="tg">◐ Toggle light / dark</button></div>
 
-  <div class="phone">
-    <div class="notch"></div>
-    <div class="screen" id="screen">
+  <!-- SVG icon defs -->
+  <svg width="0" height="0" style="position:absolute"><defs>
+    <symbol id="prev" viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4" fill="currentColor" stroke="none"/><line x1="5" y1="19" x2="5" y2="5"/></symbol>
+    <symbol id="next" viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20" fill="currentColor" stroke="none"/><line x1="19" y1="5" x2="19" y2="19"/></symbol>
+    <symbol id="play" viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none"/><rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="heart" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></symbol>
+    <symbol id="shuffle" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></symbol>
+    <symbol id="repeat" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></symbol>
+    <symbol id="list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+    <symbol id="vol" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19" fill="currentColor" stroke="none"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></symbol>
+    <symbol id="chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></symbol>
+  </defs></svg>
 
-      <!-- 0 SPLASH -->
-      <div class="page splash active">
-        <div class="logo">🎵</div>
-        <h2>MusicLock</h2>
-        <div class="v">your music, on the lock screen</div>
-        <div class="route">Checking permissions… first run → onboarding.<br>(Returning users with everything granted skip straight to home.)</div>
-      </div>
+  <div class="grid">
 
-      <!-- 1 WELCOME -->
-      <div class="page welcome">
-        <div class="dots" data-step="1"></div>
-        <div class="spacer"></div>
-        <div class="hero">🎵</div>
-        <div class="ptitle">Welcome to MusicLock</div>
-        <div class="what">Lock your phone while music plays and a beautiful player takes over your lock screen — controls, art, the works.<br><br>We need a few permissions first. We'll explain each one.</div>
-        <div class="spacer"></div>
-        <div class="nav"><button class="next" onclick="go(2)">Get started</button></div>
-      </div>
+    <!-- ============ A · CARD ============ -->
+    <div class="cell">
+      <div class="tag">A · Card</div>
+      <div class="phone"><div class="notch"></div><div class="screen A">
+        <div class="status"><span>8:00</span><span class="right">▰▰▰</span></div>
+        <div class="topbar">
+          <div class="ico"><svg class="i" style="width:22px;height:22px"><use href="#chev"/></svg></div>
+          <div>Now Playing</div>
+          <div style="width:22px"></div>
+        </div>
+        <div class="art" style="background-image:url(mock-assets/album.png)"></div>
+        <div class="meta">
+          <h2>Redbone</h2>
+          <div class="ar">Childish Gambino</div>
+        </div>
+        <div class="wave" id="waveA"></div>
+        <div class="times"><span>1:04</span><span>5:26</span></div>
+        <div class="ctrls">
+          <div class="ico"><svg class="i"><use href="#prev"/></svg></div>
+          <div class="ico play"><svg class="i"><use href="#play"/></svg></div>
+          <div class="ico"><svg class="i"><use href="#next"/></svg></div>
+        </div>
+        <div class="volwrap vol">
+          <svg class="i" style="width:18px;height:18px"><use href="#vol"/></svg>
+          <div class="track"><div class="fill" style="width:62%"></div></div>
+        </div>
+      </div></div>
+      <div class="note">Clean editorial card — art hero, stylized progress track (decorative, fill = position). Smallest build, reads great in both themes.</div>
+    </div>
 
-      <!-- 2 PERM: Notifications -->
-      <div class="page">
-        <div class="dots" data-step="2"></div>
-        <div class="icon">🔔</div>
-        <div class="ptitle">Notifications</div>
-        <div class="what">Allow MusicLock to post notifications.</div>
-        <div class="why"><span class="b">Why</span><p>The lock-screen player is launched as a full-screen notification — without this it can't appear when your screen turns on.</p></div>
-        <span class="chip req" id="c2">Required</span>
-        <div class="spacer"></div>
-        <button class="grant" id="g2" onclick="grant(2)">Grant permission</button>
-        <div class="nav"><button class="back" onclick="go(1)">Back</button><button class="next disabled" id="n2" onclick="go(3)">Next</button></div>
-      </div>
+    <!-- ============ B · TURNTABLE ============ -->
+    <div class="cell">
+      <div class="tag">B · Turntable</div>
+      <div class="phone"><div class="notch"></div><div class="screen B">
+        <div class="status"><span>9:41</span><span class="right">5G ▰▰▰</span></div>
+        <div class="deck">
+          <div class="vinyl"><div class="label" style="background-image:url(mock-assets/album.png)"></div></div>
+          <div class="arm"></div>
+        </div>
+        <div class="meta"><h2>Redbone</h2><div class="ar">Childish Gambino</div></div>
+        <div class="volwrap vol">
+          <svg class="i" style="width:18px;height:18px"><use href="#vol"/></svg>
+          <div class="track"><div class="fill" style="width:55%"></div></div>
+        </div>
+        <div class="ctrls">
+          <div class="pill">PAUSE</div>
+          <div class="pill sq"><svg class="i" style="width:22px;height:22px"><use href="#prev"/></svg></div>
+          <div class="pill sq"><svg class="i" style="width:22px;height:22px"><use href="#next"/></svg></div>
+        </div>
+      </div></div>
+      <div class="note">Spinning vinyl with art as the label, warm deck gradient. Most atmospheric; the record animates while playing.</div>
+    </div>
 
-      <!-- 3 PERM: Notification access -->
-      <div class="page">
-        <div class="dots" data-step="3"></div>
-        <div class="icon">📡</div>
-        <div class="ptitle">Notification access</div>
-        <div class="what">Let MusicLock read media notifications.</div>
-        <div class="why"><span class="b">Why</span><p>This is how we know what's playing — title, artist, art — and how the play/pause/skip controls work. Opens a system settings page.</p></div>
-        <span class="chip req" id="c3">Required</span>
-        <div class="spacer"></div>
-        <button class="grant" id="g3" onclick="grant(3)">Open settings</button>
-        <div class="nav"><button class="back" onclick="go(2)">Back</button><button class="next disabled" id="n3" onclick="go(4)">Next</button></div>
-      </div>
-
-      <!-- 4 PERM: Display over apps -->
-      <div class="page">
-        <div class="dots" data-step="4"></div>
-        <div class="icon">🪟</div>
-        <div class="ptitle">Display over other apps</div>
-        <div class="what">Allow drawing on top of the lock screen.</div>
-        <div class="why"><span class="b">Why</span><p>The player draws over the system lock screen so your controls sit right where you expect them. Opens a system settings page.</p></div>
-        <span class="chip req" id="c4">Required</span>
-        <div class="spacer"></div>
-        <button class="grant" id="g4" onclick="grant(4)">Open settings</button>
-        <div class="nav"><button class="back" onclick="go(3)">Back</button><button class="next disabled" id="n4" onclick="go(5)">Next</button></div>
-      </div>
-
-      <!-- 5 PERM: Full-screen intent -->
-      <div class="page">
-        <div class="dots" data-step="5"></div>
-        <div class="icon">⛶</div>
-        <div class="ptitle">Full-screen notifications</div>
-        <div class="what">Allow the immersive full-screen player.</div>
-        <div class="why"><span class="b">Why</span><p>Lets the player take the whole screen the moment your phone wakes, instead of a small notification banner. Opens a system settings page.</p></div>
-        <span class="chip req" id="c5">Required</span>
-        <div class="spacer"></div>
-        <button class="grant" id="g5" onclick="grant(5)">Open settings</button>
-        <div class="nav"><button class="back" onclick="go(4)">Back</button><button class="next disabled" id="n5" onclick="go(6)">Next</button></div>
-      </div>
-
-      <!-- 6 PERM: Battery (optional) -->
-      <div class="page">
-        <div class="dots" data-step="6"></div>
-        <div class="icon">🔋</div>
-        <div class="ptitle">Ignore battery optimization</div>
-        <div class="what">Keep MusicLock running in the background.</div>
-        <div class="why"><span class="b">Why</span><p>Stops the system from killing the listener while idle, so playback is never missed. Optional — the app still works, just less reliably.</p></div>
-        <span class="chip opt" id="c6">Optional</span>
-        <div class="spacer"></div>
-        <button class="grant" id="g6" onclick="grant(6)">Enable</button>
-        <div class="nav"><button class="back" onclick="go(5)">Back</button><button class="skip" onclick="go(7)">Skip</button><button class="next" onclick="go(7)">Next</button></div>
-      </div>
-
-      <!-- 7 PICK A LOOK -->
-      <div class="page">
-        <div class="dots" data-step="7"></div>
-        <div class="ptitle" style="text-align:left;font-size:21px">Pick a look</div>
-        <div class="what" style="text-align:left;margin-top:8px">Choose a lock-screen player and color theme. You can change these anytime.</div>
-        <div class="scrollarea" style="margin-top:18px">
-          <p class="seclabel">Lock-screen player</p>
-          <div class="grid">
-            <div class="pcard sel" onclick="pick(this)"><div class="n">Glass Neon</div><div class="o">Portrait</div></div>
-            <div class="pcard" onclick="pick(this)"><div class="n">iPod</div><div class="o">Portrait</div></div>
-            <div class="pcard" onclick="pick(this)"><div class="n">Turntable</div><div class="o">Landscape</div></div>
-            <div class="pcard" onclick="pick(this)"><div class="n">Cassette</div><div class="o">Landscape</div></div>
-            <div class="pcard" onclick="pick(this)"><div class="n">Vaporwave</div><div class="o">Portrait</div></div>
-            <div class="pcard" onclick="pick(this)"><div class="n">Terminal</div><div class="o">Portrait</div></div>
+    <!-- ============ C · GLASS ============ -->
+    <div class="cell">
+      <div class="tag">C · Glass</div>
+      <div class="phone"><div class="notch"></div><div class="screen C">
+        <div class="photo" style="background-image:url(mock-assets/album.png)">
+          <div class="status"><span>10:08</span><span class="right">76% ▰</span></div>
+          <div class="scrub"><i></i></div>
+        </div>
+        <div class="panel">
+          <div class="times"><span>0:31</span><span>-3:02</span></div>
+          <div class="meta"><h2>Redbone</h2><div class="ar">Childish Gambino</div></div>
+          <div class="ctrls">
+            <div class="ico"><svg class="i"><use href="#prev"/></svg></div>
+            <div class="ico play"><svg class="i"><use href="#pause"/></svg></div>
+            <div class="ico"><svg class="i"><use href="#next"/></svg></div>
           </div>
-          <p class="seclabel">Theme</p>
-          <div class="grid">
-            <div class="pcard sel" onclick="pick(this)"><div class="n">Minimalist Dark</div></div>
-            <div class="pcard" onclick="pick(this)"><div class="n">Glassmorphism</div></div>
+          <div class="volwrap vol">
+            <svg class="i" style="width:18px;height:18px"><use href="#vol"/></svg>
+            <div class="track"><div class="fill" style="width:48%"></div></div>
           </div>
         </div>
-        <div class="nav"><button class="back" onclick="go(6)">Back</button><button class="next" onclick="go(8)">Next</button></div>
-      </div>
-
-      <!-- 8 DONE -->
-      <div class="page done-pg">
-        <div class="dots" data-step="8"></div>
-        <div class="spacer"></div>
-        <div class="check">✓</div>
-        <div class="ptitle">You're all set</div>
-        <div class="what">Lock your phone while music plays and MusicLock takes over.<br><br>Tweak skins and themes anytime from the app.</div>
-        <div class="spacer"></div>
-        <div class="nav"><button class="next" onclick="go(0)">Finish</button></div>
-      </div>
-
+      </div></div>
+      <div class="note">Full-bleed art up top, frosted control deck below (Apple Music style). Volume slider + filmstrip scrubber.</div>
     </div>
+
+    <!-- ============ D · FLOATING ============ -->
+    <div class="cell">
+      <div class="tag">D · Floating</div>
+      <div class="phone"><div class="notch"></div><div class="screen D">
+        <div class="sky" style="background-image:url(mock-assets/album.png)"></div>
+        <div class="scrim"></div>
+        <div class="status" style="position:relative;z-index:3;color:#fff"><span>9:41</span><span class="right">▰▰▰</span></div>
+        <div class="ovl">
+          <div class="slider"><i></i></div>
+          <div class="times"><span>0:57</span><span>5:26</span></div>
+          <div class="ctrls">
+            <div class="ico"><svg class="i"><use href="#prev"/></svg></div>
+            <div class="ico play"><svg class="i"><use href="#play"/></svg></div>
+            <div class="ico"><svg class="i"><use href="#next"/></svg></div>
+          </div>
+          <div class="volwrap vol">
+            <svg class="i" style="width:18px;height:18px"><use href="#vol"/></svg>
+            <div class="track"><div class="fill" style="width:70%"></div></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="note">Minimal controls floating over the artwork as wallpaper — barely-there chrome. Most ambient, least UI.</div>
+    </div>
+
   </div>
 
 <script>
-  const pages=[...document.querySelectorAll('.page')];
-  function go(i){pages.forEach((p,k)=>p.classList.toggle('active',k===i));}
-  document.querySelectorAll('.dots').forEach(d=>{
-    const step=+d.dataset.step;
-    for(let k=1;k<=8;k++){const s=document.createElement('div');s.className='dot'+(k===step?' on':'');d.appendChild(s);}
-  });
-  function grant(i){
-    const g=document.getElementById('g'+i); g.classList.add('done'); g.textContent='Granted ✓';
-    const c=document.getElementById('c'+i); c.className='chip ok'; c.textContent='Granted ✓';
-    const n=document.getElementById('n'+i); if(n)n.classList.remove('disabled');
+  // theme toggle
+  document.getElementById('tg').onclick = () => {
+    const h = document.documentElement;
+    h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
+  };
+  // waveform bars for variant A (deterministic heights)
+  const wave = document.getElementById('waveA');
+  const N = 48, playhead = Math.floor(N*0.38);
+  for (let k=0;k<N;k++){
+    const b = document.createElement('i');
+    const h = 20 + Math.abs(Math.sin(k*1.7)*Math.cos(k*0.6))*80;
+    b.style.height = h + '%';
+    if (k < playhead) b.classList.add('on');
+    wave.appendChild(b);
   }
-  function pick(el){
-    el.parentElement.querySelectorAll('.pcard').forEach(c=>c.classList.remove('sel'));
-    el.classList.add('sel');
-  }
-  // route-only splash auto-advances after a beat
-  setTimeout(()=>{if(pages[0].classList.contains('active'))go(1);},1600);
 </script>
 </body>
 </html>
