@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,7 +25,7 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
-import androidx.compose.material.icons.rounded.VolumeUp
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -232,7 +233,7 @@ fun CardSkin(scope: SkinScope) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(
-                    Icons.Rounded.VolumeUp,
+                    Icons.AutoMirrored.Rounded.VolumeUp,
                     contentDescription = null,
                     tint = MutedColor,
                     modifier = Modifier.size(18.dp),
@@ -261,7 +262,7 @@ fun CardSkin(scope: SkinScope) {
  */
 @Composable
 private fun CardBarMeter(scope: SkinScope, ink: Color) {
-    val fraction by remember(scope) { derivedStateOf { scope.progressFraction() } }
+    val fraction by remember { derivedStateOf { scope.progressFraction() } }
     val duration = scope.durationMs.coerceAtLeast(1L)
     val faintColor = ink.copy(alpha = 0.15f)
 
@@ -285,7 +286,7 @@ private fun CardBarMeter(scope: SkinScope, ink: Color) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxSize(barFrac)
+                        .fillMaxHeight(barFrac)
                         .clip(RoundedCornerShape(2.dp))
                         .background(if (k < played) ink else faintColor),
                 )
