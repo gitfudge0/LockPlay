@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -56,6 +55,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -157,14 +157,12 @@ fun OnboardingFlow(
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             when (step) {
                 STEP_WELCOME -> WelcomeStep(skin = skin, onStart = ::advance)
-                STEP_WELCOME2 -> Welcome2Step(onContinue = ::advance)
                 STEP_SUMMARY -> SummaryStep(
                     granted = granted,
                     onRow = { perm -> jumpTo(permStepIndex(perm), ret = STEP_SUMMARY) },
                     onFinish = ::advance,
                 )
                 STEP_END -> EndStep(
-                    skin = skin,
                     granted = granted,
                     onFixCore = { jumpTo(permStepIndex(CorePerm), ret = STEP_END) },
                     onBackToSummary = { jumpTo(STEP_SUMMARY) },
@@ -199,6 +197,7 @@ private fun StepLayout(
         Column(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             verticalArrangement = bodyArrangement,
+            horizontalAlignment = Alignment.CenterHorizontally,
             content = body,
         )
         Column(
@@ -251,70 +250,15 @@ private fun WelcomeStep(skin: PlayerSkin, onStart: () -> Unit) {
         // player mock renders, so let it take the full flex.
         LockscreenPeek(skin = skin, modifier = Modifier.weight(1f))
         AppText("MUSICLOCK", AppTheme.typography.label, color = AppTheme.colors.accentOnSurface)
-        AppText("Your music, on your lockscreen.", AppTheme.typography.display, color = AppTheme.colors.textPrimary)
+        AppText("Your music, on your lockscreen.", AppTheme.typography.display, color = AppTheme.colors.textPrimary, textAlign = TextAlign.Center)
         AppText(
             "Turn the lock screen into a full-bleed player that follows whatever you're listening to.",
             AppTheme.typography.body,
             color = AppTheme.colors.textSecondary,
+            textAlign = TextAlign.Center,
         )
         // Extra breathing room between the copy and the bottom-pinned "Get started" button.
         Spacer(Modifier.height(AppTheme.spacing.lg))
-    }
-}
-
-@Composable
-private fun Welcome2Step(onContinue: () -> Unit) {
-    StepLayout(
-        // Center the body so the artwork tile sits in balanced space rather than pinning to the
-        // top under the lone back chevron.
-        bodyArrangement = Arrangement.spacedBy(AppTheme.spacing.md, Alignment.CenterVertically),
-        bottom = {
-            AppButton(label = "Set it up", onClick = onContinue, block = true, size = ButtonSize.Lg)
-            AppText(
-                "Takes about a minute · ${OnboardingPerms.size} quick steps",
-                AppTheme.typography.timestamp,
-                color = AppTheme.colors.textTertiary,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-    ) {
-        // Sample "album art": a warm, multi-hue diagonal sweep (deep-orange → orange → amber) so it
-        // reads as real cover art the accent is pulled from, not a flat slab. A fixed album-ish
-        // aspect ratio keeps it from swallowing the whole screen.
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.25f)
-                .clip(AppTheme.shapes.large)
-                .background(
-                    Brush.linearGradient(
-                        listOf(AppTheme.colors.accentStrong, AppTheme.colors.accent, AppTheme.colors.warning),
-                    ),
-                ),
-        )
-        // Accent swatch row.
-        Row(horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.sm)) {
-            listOf(
-                AppTheme.colors.accent,
-                AppTheme.colors.accentStrong,
-                AppTheme.colors.positive,
-                AppTheme.colors.warning,
-                AppTheme.colors.critical,
-            ).forEach { c ->
-                Box(
-                    modifier = Modifier
-                        .size(AppTheme.spacing.lg)
-                        .clip(CircleShape)
-                        .background(c),
-                )
-            }
-        }
-        AppText("The color follows the artwork.", AppTheme.typography.display, color = AppTheme.colors.textPrimary)
-        AppText(
-            "Every player pulls its accent from the album cover, so each track sets the mood.",
-            AppTheme.typography.body,
-            color = AppTheme.colors.textSecondary,
-        )
     }
 }
 
@@ -370,8 +314,8 @@ private fun PermPrime(copy: PermCopy, onGrant: () -> Unit, onSkip: () -> Unit) {
             AppText(copy.phase, AppTheme.typography.label, color = AppTheme.colors.accentOnSurface)
             if (copy.required) AppChip("Required", ChipTone.Accent)
         }
-        AppText(copy.headline, AppTheme.typography.display, color = AppTheme.colors.textPrimary)
-        AppText(copy.body, AppTheme.typography.body, color = AppTheme.colors.textSecondary)
+        AppText(copy.headline, AppTheme.typography.display, color = AppTheme.colors.textPrimary, textAlign = TextAlign.Center)
+        AppText(copy.body, AppTheme.typography.body, color = AppTheme.colors.textSecondary, textAlign = TextAlign.Center)
         if (copy.handoff != null) {
             Box(
                 modifier = Modifier
@@ -432,8 +376,8 @@ private fun PermConfirmed(copy: PermCopy, onContinue: () -> Unit) {
                 )
             }
         }
-        AppText(copy.grantedTitle, AppTheme.typography.display, color = AppTheme.colors.textPrimary)
-        AppText(copy.grantedBody, AppTheme.typography.body, color = AppTheme.colors.textSecondary)
+        AppText(copy.grantedTitle, AppTheme.typography.display, color = AppTheme.colors.textPrimary, textAlign = TextAlign.Center)
+        AppText(copy.grantedBody, AppTheme.typography.body, color = AppTheme.colors.textSecondary, textAlign = TextAlign.Center)
     }
 }
 
@@ -462,12 +406,14 @@ private fun SummaryStep(
             if (coreMissing) "One required step left" else "$count of ${OnboardingPerms.size} set up",
             AppTheme.typography.display,
             color = AppTheme.colors.textPrimary,
+            textAlign = TextAlign.Center,
         )
         AppText(
             if (coreMissing) "Grant notification access to finish, or continue with limited features."
             else "Review what's on. Tap any item to change it.",
             AppTheme.typography.body,
             color = AppTheme.colors.textSecondary,
+            textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(AppTheme.spacing.xs))
         OnboardingPerms.forEach { perm ->
@@ -510,7 +456,6 @@ private fun SummaryRow(perm: AppPermission, isGranted: Boolean, onClick: () -> U
 
 @Composable
 private fun EndStep(
-    skin: PlayerSkin,
     granted: Map<AppPermission, Boolean>,
     onFixCore: () -> Unit,
     onBackToSummary: () -> Unit,
@@ -524,27 +469,27 @@ private fun EndStep(
             },
         ) {
             RoundIcon(Icons.Filled.Lock)
-            AppText("MusicLock can't see your music yet", AppTheme.typography.display, color = AppTheme.colors.textPrimary)
+            AppText("MusicLock can't see your music yet", AppTheme.typography.display, color = AppTheme.colors.textPrimary, textAlign = TextAlign.Center)
             AppText(
                 "Notification access is required before the lockscreen player can appear.",
                 AppTheme.typography.body,
                 color = AppTheme.colors.textSecondary,
+                textAlign = TextAlign.Center,
             )
         }
         return
     }
     val degraded = degradedPerms(granted)
     StepLayout(
-        bodyArrangement = Arrangement.spacedBy(AppTheme.spacing.md, Alignment.Top),
         bottom = { AppButton(label = "Open MusicLock", onClick = onOpenMain, block = true, size = ButtonSize.Lg) },
     ) {
         AppChip("You're all set", ChipTone.Positive)
-        LockscreenPeek(skin = skin, modifier = Modifier.weight(1f))
-        AppText("Press play and look at your lockscreen", AppTheme.typography.display, color = AppTheme.colors.textPrimary)
+        AppText("Press play and look at your lockscreen", AppTheme.typography.display, color = AppTheme.colors.textPrimary, textAlign = TextAlign.Center)
         AppText(
             "Start any music, then lock your phone — MusicLock takes over the screen.",
             AppTheme.typography.body,
             color = AppTheme.colors.textSecondary,
+            textAlign = TextAlign.Center,
         )
         if (degraded.isNotEmpty()) {
             Box(

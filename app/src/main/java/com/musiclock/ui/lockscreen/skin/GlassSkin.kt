@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -64,11 +65,11 @@ fun GlassSkin(scope: SkinScope) {
     val clock = rememberClockText()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Art section — top 46%
+        // Art section — full-bleed square (1:1)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(0.46f),
+                .aspectRatio(1f),
         ) {
             SkinAlbumArt(
                 scope = scope,
@@ -97,11 +98,11 @@ fun GlassSkin(scope: SkinScope) {
             )
         }
 
-        // Frosted control panel — bottom 54%
+        // Frosted control panel — fills the remaining space below the square art
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(0.54f)
+                .weight(1f)
                 .background(Brush.verticalGradient(listOf(panelStart, panelEnd)))
                 .navigationBarsPadding()
                 .padding(horizontal = 24.dp, vertical = 16.dp),

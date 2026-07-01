@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.musiclock.design.AppTheme
@@ -37,6 +38,7 @@ fun AppText(
     modifier: Modifier = Modifier,
     maxLines: Int = Int.MAX_VALUE,
     color: Color = Color.Unspecified,
+    textAlign: TextAlign? = null,
 ) {
     Text(
         text = text,
@@ -44,6 +46,7 @@ fun AppText(
         color = color,
         maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,
+        textAlign = textAlign,
         modifier = modifier,
     )
 }

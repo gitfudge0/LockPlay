@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -113,7 +114,6 @@ fun TurntableSkin(scope: SkinScope) {
                 contentAlignment = Alignment.Center,
             ) {
                 VinylDisc(scope = scope)
-                ToneArm(modifier = Modifier.align(Alignment.TopEnd))
             }
 
             Spacer(Modifier.height(20.dp))
@@ -212,7 +212,8 @@ fun TurntableSkin(scope: SkinScope) {
     }
 }
 
-/** 230dp vinyl disc with radial-groove texture and circular album art label in the centre. */
+/** Full-width vinyl disc with radial-groove texture, a circular album art label in the centre, and
+ *  the tonearm resting half inside the disc. */
 @Composable
 private fun VinylDisc(scope: SkinScope) {
     // Lambda-read spin: the angle is sampled in the graphicsLayer draw block, so the per-frame
@@ -221,10 +222,10 @@ private fun VinylDisc(scope: SkinScope) {
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.size(230.dp),
+        modifier = Modifier.fillMaxWidth().aspectRatio(1f),
     ) {
         // Disc drawn on canvas so it rotates as one unit
-        Canvas(modifier = Modifier.size(230.dp).graphicsLayer { rotationZ = spin() }) {
+        Canvas(modifier = Modifier.fillMaxSize().graphicsLayer { rotationZ = spin() }) {
             val c = Offset(size.width / 2f, size.height / 2f)
             val outer = size.minDimension / 2f
 
@@ -258,25 +259,30 @@ private fun VinylDisc(scope: SkinScope) {
             scope = scope,
             shape = CircleShape,
             modifier = Modifier
-                .size(120.dp)
+                .fillMaxSize(0.52f)
                 .graphicsLayer { rotationZ = spin() },
         )
+
+        // Tonearm overlaid on the disc square so its headshell rests half inside the disc
+        ToneArm(modifier = Modifier.fillMaxSize())
     }
 }
 
 /**
- * Decorative tonearm, mounted at the top-right corner: a base plate + pivot hub with a counterweight
- * stub behind it and the arm sweeping down-left to a headshell over the platter. Metallic greys, fixed
- * across themes (it's hardware, not chrome), so it reads as an arm rather than a floating stick.
+ * Decorative tonearm sized to the disc square it overlays: the pivot sits just off the disc's
+ * top-right rim, a counterweight stub pokes back to the corner, and the arm sweeps down-left so the
+ * headshell rests about half a radius inside the disc. Metallic greys, fixed across themes (it's
+ * hardware, not chrome), so it reads as an arm rather than a floating stick.
  */
 @Composable
 private fun ToneArm(modifier: Modifier = Modifier) {
     val metal = Color(0xFFCBCBD2)
     val metalDark = Color(0xFF45454C)
-    Canvas(modifier = modifier.size(width = 168.dp, height = 232.dp)) {
-        val pivot = Offset(size.width * 0.80f, size.height * 0.17f)
-        val tip = Offset(size.width * 0.30f, size.height * 0.64f)
-        val weight = Offset(size.width * 0.95f, size.height * 0.05f)
+    Canvas(modifier = modifier) {
+        // Fractions of the disc square: pivot near the top-right rim, tip half-way to the centre.
+        val pivot = Offset(size.width * 0.86f, size.height * 0.14f)
+        val tip = Offset(size.width * 0.34f, size.height * 0.34f)
+        val weight = Offset(size.width * 0.97f, size.height * 0.03f)
 
         // Base plate under the pivot.
         drawCircle(metalDark, radius = 17.dp.toPx(), center = pivot)

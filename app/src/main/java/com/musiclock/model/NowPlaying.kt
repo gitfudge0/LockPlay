@@ -13,6 +13,7 @@ data class NowPlaying(
     val isActive: Boolean = false,
     val title: String = "",
     val artist: String = "",
+    val album: String = "",
     val albumArt: Bitmap? = null,
     val isPlaying: Boolean = false,
     /** Position reported by the session, in ms, at the instant [positionUpdateTime] was captured. */

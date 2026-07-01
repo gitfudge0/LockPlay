@@ -142,6 +142,7 @@ class MediaListenerService : NotificationListenerService() {
                 isActive = true,
                 title = metadata?.getString(MediaMetadata.METADATA_KEY_TITLE).orEmpty(),
                 artist = artist,
+                album = metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM).orEmpty(),
                 albumArt = albumArt,
                 isPlaying = state?.state == PlaybackState.STATE_PLAYING,
                 positionMs = state?.position ?: 0L,

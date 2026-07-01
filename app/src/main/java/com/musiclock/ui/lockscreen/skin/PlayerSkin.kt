@@ -30,6 +30,7 @@ class SkinScope(
 ) {
     val title: String get() = state.title.ifEmpty { "Unknown title" }
     val artist: String get() = state.artist.ifEmpty { "Unknown artist" }
+    val album: String get() = state.album
     val isPlaying: Boolean get() = state.isPlaying
     val durationMs: Long get() = state.durationMs
 }

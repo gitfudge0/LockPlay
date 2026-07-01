@@ -24,8 +24,7 @@ val CorePerm: AppPermission = AppPermission.NotificationListener
 
 // Fixed wizard steps surrounding the per-permission steps.
 const val STEP_WELCOME = 0
-const val STEP_WELCOME2 = 1
-const val FIRST_PERM_STEP = 2
+const val FIRST_PERM_STEP = 1
 val STEP_SUMMARY = FIRST_PERM_STEP + OnboardingPerms.size
 val STEP_END = STEP_SUMMARY + 1
 val STEP_COUNT = STEP_END + 1

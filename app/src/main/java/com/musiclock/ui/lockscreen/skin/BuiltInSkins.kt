@@ -12,9 +12,13 @@ import com.musiclock.ui.lockscreen.skin.SkinOrientation.PORTRAIT
 val CardSkinSpec = PlayerSkin("card", "Card", PORTRAIT) { CardSkin(it) }
 val TurntableSkinSpec = PlayerSkin("turntable", "Turntable", PORTRAIT) { TurntableSkin(it) }
 val GlassSkinSpec = PlayerSkin("glass", "Glass", PORTRAIT) { GlassSkin(it) }
+val EditorialSkinSpec = PlayerSkin("editorial", "Editorial", PORTRAIT) { EditorialSkin(it) }
+// Landscape tape, but registered PORTRAIT: it rotates its own content 90° rather than turning the device.
+val CassetteSkinSpec = PlayerSkin("cassette", "Cassette", PORTRAIT) { CassetteSkin(it) }
 
 /** Source of truth for selectable skins. Order is the order shown in the picker. */
-val BuiltInSkins: List<PlayerSkin> = listOf(CardSkinSpec, TurntableSkinSpec, GlassSkinSpec)
+val BuiltInSkins: List<PlayerSkin> =
+    listOf(CardSkinSpec, TurntableSkinSpec, GlassSkinSpec, EditorialSkinSpec, CassetteSkinSpec)
 
 val DefaultSkin: PlayerSkin = CardSkinSpec
 

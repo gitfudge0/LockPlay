@@ -13,6 +13,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.musiclock.BuildConfig
 import com.musiclock.design.AppThemeProvider
 import com.musiclock.design.DefaultTheme
 import com.musiclock.design.ThemeController
@@ -49,21 +50,27 @@ class MainActivity : ComponentActivity() {
                 // SolidBackground bleeds edge-to-edge; safeDrawingPadding keeps the UI clear of the
                 // status/nav bars so the bottom CTAs aren't hidden under the system bars.
                 SolidBackground {
-                    Box(Modifier.fillMaxSize().safeDrawingPadding()) {
-                        when {
-                            completed == true || openedMain ->
-                                PlayerGalleryScreen(
-                                    skinController = skinController,
-                                    themeController = themeController,
-                                )
-                            completed == false ->
-                                OnboardingFlow(
-                                    skinController = skinController,
-                                    onOpenMain = { openedMain = true },
-                                    onFinished = {},
-                                )
-                            // completed == null → still loading; SolidBackground shows the themed backdrop.
-                            else -> Unit
+                    Box(Modifier.fillMaxSize()) {
+                        Box(Modifier.fillMaxSize().safeDrawingPadding()) {
+                            when {
+                                completed == true || openedMain ->
+                                    PlayerGalleryScreen(
+                                        skinController = skinController,
+                                        themeController = themeController,
+                                    )
+                                completed == false ->
+                                    OnboardingFlow(
+                                        skinController = skinController,
+                                        onOpenMain = { openedMain = true },
+                                        onFinished = {},
+                                    )
+                                // completed == null → still loading; SolidBackground shows the themed backdrop.
+                                else -> Unit
+                            }
+                        }
+                        // Debug builds only: a corner button to open the skin lab for dev testing.
+                        if (BuildConfig.DEBUG) {
+                            com.musiclock.ui.dev.DevSkinLabOverlay()
                         }
                     }
                 }

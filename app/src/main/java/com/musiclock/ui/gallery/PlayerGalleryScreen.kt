@@ -27,6 +27,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -88,6 +89,19 @@ fun PlayerGalleryScreen(
 
     val listState = rememberLazyListState()
     val flingBehavior = rememberSnapFlingBehavior(listState)
+
+    // Auto-scroll the selected skin to the horizontal center of the row.
+    LaunchedEffect(selectedSkin.id) {
+        val index = BuiltInSkins.indexOfFirst { it.id == selectedSkin.id }
+        if (index < 0) return@LaunchedEffect
+        val info = listState.layoutInfo
+        val item = info.visibleItemsInfo.firstOrNull { it.index == index }
+        val viewport = info.viewportEndOffset - info.viewportStartOffset
+        // ponytail: assumes uniform item width; fine, all cards share CardWidthFraction.
+        val itemSize = item?.size ?: info.visibleItemsInfo.firstOrNull()?.size ?: 0
+        val offset = (viewport - itemSize) / 2
+        listState.animateScrollToItem(index, -offset)
+    }
 
     Column(
         modifier = modifier
@@ -347,6 +361,7 @@ val SampleTracks: List<NowPlaying> = listOf(
         isActive = true,
         title = "Midnight City",
         artist = "M83",
+        album = "Hurry Up, We're Dreaming",
         isPlaying = true,
         positionMs = 78_000L,
         durationMs = 240_000L,
@@ -355,6 +370,7 @@ val SampleTracks: List<NowPlaying> = listOf(
         isActive = true,
         title = "Redbone",
         artist = "Childish Gambino",
+        album = "Awaken, My Love!",
         isPlaying = true,
         positionMs = 132_000L,
         durationMs = 327_000L,
@@ -363,6 +379,7 @@ val SampleTracks: List<NowPlaying> = listOf(
         isActive = true,
         title = "Nightcall",
         artist = "Kavinsky",
+        album = "OutRun",
         isPlaying = true,
         positionMs = 54_000L,
         durationMs = 258_000L,
