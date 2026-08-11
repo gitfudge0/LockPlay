@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.musiclock"
+    namespace = "com.lockplay"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.musiclock"
+        applicationId = "com.lockplay"
         minSdk = 33
         targetSdk = 35
         versionCode = 1

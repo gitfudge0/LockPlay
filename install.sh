@@ -6,8 +6,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-PKG="com.musiclock"
-MAIN="$PKG/com.musiclock.ui.permissions.MainActivity"
+PKG="com.lockplay"
+MAIN="$PKG/com.lockplay.ui.permissions.MainActivity"
 
 echo "==> Building release APK (minify + shrink)"
 ./gradlew :app:assembleRelease

@@ -14,7 +14,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MusicLock">
+        android:theme="@style/Theme.LockPlay">
 
         <activity
             android:name=".ui.permissions.MainActivity"
@@ -34,7 +34,7 @@
             android:launchMode="singleInstance"
             android:showOnLockScreen="true"
             android:taskAffinity=""
-            android:theme="@style/Theme.MusicLock.Lockscreen" />
+            android:theme="@style/Theme.LockPlay.Lockscreen" />
 
         <service
             android:name=".media.MediaListenerService"

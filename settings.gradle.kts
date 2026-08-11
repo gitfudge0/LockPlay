@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MusicLock"
+rootProject.name = "LockPlay"
 include(":app")

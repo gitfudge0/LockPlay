@@ -4,9 +4,9 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-PKG="com.musiclock.debug"                       # debug build has .debug applicationId suffix
-LISTENER="$PKG/com.musiclock.media.MediaListenerService"
-MAIN="$PKG/com.musiclock.ui.permissions.MainActivity"
+PKG="com.lockplay.debug"                       # debug build has .debug applicationId suffix
+LISTENER="$PKG/com.lockplay.media.MediaListenerService"
+MAIN="$PKG/com.lockplay.ui.permissions.MainActivity"
 
 echo "==> Building debug APK"
 ./gradlew :app:assembleDebug

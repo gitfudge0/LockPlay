@@ -2,10 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
         <!-- Debug-only: renders one skin full-screen for design screenshots.
-             Launch: adb shell am start -n com.musiclock.debug/com.musiclock.ui.debug.SkinPreviewActivity -e skin card -->
+             Launch: adb shell am start -n com.lockplay.debug/com.lockplay.ui.debug.SkinPreviewActivity -e skin card -->
         <activity
-            android:name="com.musiclock.ui.debug.SkinPreviewActivity"
+            android:name="com.lockplay.ui.debug.SkinPreviewActivity"
             android:exported="true"
-            android:theme="@style/Theme.MusicLock.Lockscreen" />
+            android:theme="@style/Theme.LockPlay.Lockscreen" />
     </application>
 </manifest>
