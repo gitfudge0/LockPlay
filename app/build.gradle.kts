@@ -2,6 +2,32 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.spotless)
+}
+
+spotless {
+    kotlin {
+        target("src/**/*.kt")
+        ktlint("1.3.1").editorConfigOverride(
+            mapOf(
+                "ktlint_standard_no-consecutive-comments" to "disabled",
+                "ktlint_standard_function-naming" to "disabled",
+                "ktlint_standard_property-naming" to "disabled",
+            ),
+        )
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    kotlinGradle {
+        target("*.gradle.kts")
+        ktlint("1.3.1").editorConfigOverride(
+            mapOf(
+                "ktlint_standard_no-consecutive-comments" to "disabled",
+                "ktlint_standard_function-naming" to "disabled",
+                "ktlint_standard_property-naming" to "disabled",
+            ),
+        )
+    }
 }
 
 android {
@@ -27,7 +53,7 @@ android {
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             // ponytail: debug signing so `install.sh` produces a launchable APK with no keystore setup.
             // Swap to a real release keystore before publishing.
