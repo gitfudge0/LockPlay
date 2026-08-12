@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -201,8 +200,11 @@ private fun GalleryHeader(
                             AppText(
                                 spec.displayName,
                                 AppTheme.typography.body,
-                                color = if (spec.id == currentTheme.id) AppTheme.colors.accentOnSurface
-                                else AppTheme.colors.textPrimary,
+                                color = if (spec.id == currentTheme.id) {
+                                    AppTheme.colors.accentOnSurface
+                                } else {
+                                    AppTheme.colors.textPrimary
+                                },
                             )
                         },
                         leadingIcon = {
@@ -250,7 +252,10 @@ private fun SkinCard(
         SkinScope(
             state = track,
             position = { 0L },
-            onSeek = {}, onPrev = {}, onPlayPause = {}, onNext = {},
+            onSeek = {},
+            onPrev = {},
+            onPlayPause = {},
+            onNext = {},
         )
     }
     Column(
@@ -264,11 +269,15 @@ private fun SkinCard(
                 .clip(AppTheme.shapes.large)
                 .background(AppTheme.colors.surfaceElevated)
                 .then(
-                    if (selected) Modifier.border(
-                        AppTheme.spacing.xs,
-                        AppTheme.colors.accent,
-                        AppTheme.shapes.large,
-                    ) else Modifier,
+                    if (selected) {
+                        Modifier.border(
+                            AppTheme.spacing.xs,
+                            AppTheme.colors.accent,
+                            AppTheme.shapes.large,
+                        )
+                    } else {
+                        Modifier
+                    },
                 )
                 .padding(AppTheme.spacing.xs)
                 .clip(AppTheme.shapes.medium),

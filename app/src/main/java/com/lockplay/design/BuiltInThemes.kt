@@ -52,7 +52,7 @@ val MinimalistDark: ThemeSpec = run {
     // Ember-dark palette from the design's tokens/colors.css.
     val textPrimary = Color(0xFFF5F4F2)
     val textSecondary = Color(0xA8F5F4F2) // 66% of textPrimary
-    val textTertiary = Color(0x6BF5F4F2)  // 42% of textPrimary
+    val textTertiary = Color(0x6BF5F4F2) // 42% of textPrimary
     ThemeSpec(
         id = "minimalist_dark",
         displayName = "Minimalist Dark",
@@ -76,10 +76,10 @@ val MinimalistDark: ThemeSpec = run {
             textOnAccent = Color(0xFF1A0E08),
             surfaceElevated = Color(0xFF131316),
             surfaceSheet = Color(0xFF1B1B1F),
-            borderSubtle = Color(0x1FF5F4F2),     // 12%
-            borderStrong = Color(0x38F5F4F2),     // 22%
-            fillGhost = Color(0x14F5F4F2),        // 8%
-            fillGhostStrong = Color(0x24F5F4F2),  // 14%
+            borderSubtle = Color(0x1FF5F4F2), // 12%
+            borderStrong = Color(0x38F5F4F2), // 22%
+            fillGhost = Color(0x14F5F4F2), // 8%
+            fillGhostStrong = Color(0x24F5F4F2), // 14%
             positive = Color(0xFF4ED08A),
             warning = Color(0xFFF5B544),
             critical = Color(0xFFFF5C5C),

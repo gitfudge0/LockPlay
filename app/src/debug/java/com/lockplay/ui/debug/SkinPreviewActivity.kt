@@ -5,12 +5,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.lockplay.R
 import com.lockplay.model.NowPlaying
 import com.lockplay.ui.lockscreen.skin.SkinScope
@@ -52,7 +52,10 @@ class SkinPreviewActivity : ComponentActivity() {
                     SkinScope(
                         state = sample,
                         position = { 64_000L },
-                        onSeek = {}, onPrev = {}, onPlayPause = {}, onNext = {},
+                        onSeek = {},
+                        onPrev = {},
+                        onPlayPause = {},
+                        onNext = {},
                     ),
                 )
             }

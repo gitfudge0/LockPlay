@@ -41,10 +41,15 @@ object MediaRepository {
 
     // --- Transport (no-ops when no controller is attached) ---
     @MainThread fun play() = controller?.transportControls?.play()
+
     @MainThread fun pause() = controller?.transportControls?.pause()
+
     @MainThread fun next() = controller?.transportControls?.skipToNext()
+
     @MainThread fun previous() = controller?.transportControls?.skipToPrevious()
+
     @MainThread fun seekTo(positionMs: Long) = controller?.transportControls?.seekTo(positionMs)
+
     @MainThread fun togglePlayPause() {
         if (isPlaying()) pause() else play()
     }

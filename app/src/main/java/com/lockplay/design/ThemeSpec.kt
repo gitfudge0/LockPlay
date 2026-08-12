@@ -45,15 +45,21 @@ fun AppThemeProvider(spec: ThemeSpec, content: @Composable () -> Unit) {
 /** Ergonomic accessor, mirroring MaterialTheme.* — `AppTheme.colors.primary`, `AppTheme.spacing.md`. */
 object AppTheme {
     val colors: ColorTokens
-        @Composable @ReadOnlyComposable get() = LocalColorTokens.current
+        @Composable @ReadOnlyComposable
+        get() = LocalColorTokens.current
     val typography: TypographyTokens
-        @Composable @ReadOnlyComposable get() = LocalTypographyTokens.current
+        @Composable @ReadOnlyComposable
+        get() = LocalTypographyTokens.current
     val shapes: ShapeTokens
-        @Composable @ReadOnlyComposable get() = LocalShapeTokens.current
+        @Composable @ReadOnlyComposable
+        get() = LocalShapeTokens.current
     val spacing: SpacingTokens
-        @Composable @ReadOnlyComposable get() = LocalSpacingTokens.current
+        @Composable @ReadOnlyComposable
+        get() = LocalSpacingTokens.current
     val motion: MotionTokens
-        @Composable @ReadOnlyComposable get() = LocalMotionTokens.current
+        @Composable @ReadOnlyComposable
+        get() = LocalMotionTokens.current
     val backgroundStyle: BackgroundStyle
-        @Composable @ReadOnlyComposable get() = LocalBackgroundStyle.current
+        @Composable @ReadOnlyComposable
+        get() = LocalBackgroundStyle.current
 }

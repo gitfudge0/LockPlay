@@ -128,7 +128,7 @@ enum class AppPermission(
             // ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS prompts directly for our package.
             Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, packageUri(ctx))
         }
-    };
+    }, ;
 
     /** Whether the permission is currently granted on this device. */
     abstract fun isGranted(context: Context): Boolean

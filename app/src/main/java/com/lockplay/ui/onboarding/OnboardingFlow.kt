@@ -1,5 +1,6 @@
 package com.lockplay.ui.onboarding
 
+import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -15,7 +16,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Check
@@ -35,11 +36,9 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Icon
-import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -55,10 +54,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -123,13 +122,21 @@ fun OnboardingFlow(
 
     fun advance() {
         if (returnTo >= 0) {
-            val r = returnTo; returnTo = -1; step = r
+            val r = returnTo
+            returnTo = -1
+            step = r
         } else {
             step = (step + 1).coerceAtMost(STEP_END)
         }
     }
-    fun back() { returnTo = -1; step = (step - 1).coerceAtLeast(STEP_WELCOME) }
-    fun jumpTo(target: Int, ret: Int = -1) { returnTo = ret; step = target }
+    fun back() {
+        returnTo = -1
+        step = (step - 1).coerceAtLeast(STEP_WELCOME)
+    }
+    fun jumpTo(target: Int, ret: Int = -1) {
+        returnTo = ret
+        step = target
+    }
 
     fun finish() {
         scope.launch { controller.markComplete() }
@@ -174,7 +181,10 @@ fun OnboardingFlow(
                         isGranted = granted[perm] == true,
                         onRefresh = ::refresh,
                         onContinue = ::advance,
-                        onSkip = { skipped[perm] = true; advance() },
+                        onSkip = {
+                            skipped[perm] = true
+                            advance()
+                        },
                     )
                 }
             }
@@ -409,8 +419,11 @@ private fun SummaryStep(
             textAlign = TextAlign.Center,
         )
         AppText(
-            if (coreMissing) "Grant notification access to finish, or continue with limited features."
-            else "Review what's on. Tap any item to change it.",
+            if (coreMissing) {
+                "Grant notification access to finish, or continue with limited features."
+            } else {
+                "Review what's on. Tap any item to change it."
+            },
             AppTheme.typography.body,
             color = AppTheme.colors.textSecondary,
             textAlign = TextAlign.Center,
@@ -445,8 +458,20 @@ private fun SummaryRow(perm: AppPermission, isGranted: Boolean, onClick: () -> U
                 )
             }
             AppChip(
-                text = if (isGranted) "On" else if (perm.optional) "Optional" else "Needed",
-                tone = if (isGranted) ChipTone.Positive else if (perm.optional) ChipTone.Outline else ChipTone.Accent,
+                text = if (isGranted) {
+                    "On"
+                } else if (perm.optional) {
+                    "Optional"
+                } else {
+                    "Needed"
+                },
+                tone = if (isGranted) {
+                    ChipTone.Positive
+                } else if (perm.optional) {
+                    ChipTone.Outline
+                } else {
+                    ChipTone.Accent
+                },
             )
         }
     }
@@ -548,9 +573,13 @@ private fun sampleAlbumArt(): android.graphics.Bitmap {
     android.graphics.Canvas(bmp).drawPaint(
         android.graphics.Paint().apply {
             shader = android.graphics.LinearGradient(
-                0f, 0f, size.toFloat(), size.toFloat(),
+                0f,
+                0f,
+                size.toFloat(),
+                size.toFloat(),
                 intArrayOf(0xFFE8552E.toInt(), 0xFFF5853F.toInt(), 0xFFF0B429.toInt()),
-                null, android.graphics.Shader.TileMode.CLAMP,
+                null,
+                android.graphics.Shader.TileMode.CLAMP,
             )
         },
     )
@@ -573,7 +602,10 @@ private fun LockscreenPeek(skin: PlayerSkin, modifier: Modifier = Modifier) {
         SkinScope(
             state = sample,
             position = { 78_000L },
-            onSeek = {}, onPrev = {}, onPlayPause = {}, onNext = {},
+            onSeek = {},
+            onPrev = {},
+            onPlayPause = {},
+            onNext = {},
         )
     }
     // The skins are full-screen portrait layouts designed for a real screen, so rendering them small

@@ -32,7 +32,9 @@ data class NowPlaying(
     fun positionAt(elapsedRealtimeNow: Long): Long {
         val advance = if (isPlaying && positionUpdateTime > 0L) {
             ((elapsedRealtimeNow - positionUpdateTime).coerceAtLeast(0L) * playbackSpeed).toLong()
-        } else 0L
+        } else {
+            0L
+        }
         val upper = if (durationMs > 0L) durationMs else Long.MAX_VALUE
         return (positionMs + advance).coerceIn(0L, upper)
     }

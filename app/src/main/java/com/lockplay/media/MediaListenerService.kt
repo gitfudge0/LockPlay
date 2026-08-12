@@ -149,7 +149,7 @@ class MediaListenerService : NotificationListenerService() {
                 durationMs = metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L,
                 positionUpdateTime = SystemClock.elapsedRealtime(),
                 playbackSpeed = state?.playbackSpeed ?: 1f,
-            )
+            ),
         )
     }
 

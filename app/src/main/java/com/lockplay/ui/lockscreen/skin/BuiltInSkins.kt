@@ -13,6 +13,7 @@ val CardSkinSpec = PlayerSkin("card", "Card", PORTRAIT) { CardSkin(it) }
 val TurntableSkinSpec = PlayerSkin("turntable", "Turntable", PORTRAIT) { TurntableSkin(it) }
 val GlassSkinSpec = PlayerSkin("glass", "Glass", PORTRAIT) { GlassSkin(it) }
 val EditorialSkinSpec = PlayerSkin("editorial", "Editorial", PORTRAIT) { EditorialSkin(it) }
+
 // Landscape tape, but registered PORTRAIT: it rotates its own content 90° rather than turning the device.
 val CassetteSkinSpec = PlayerSkin("cassette", "Cassette", PORTRAIT) { CassetteSkin(it) }
 

@@ -21,8 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import java.time.LocalTime
 import kotlinx.coroutines.delay
+import java.time.LocalTime
 
 /**
  * Small, skin-agnostic building blocks shared by the player skins. Anything bigger or design-specific
@@ -116,4 +116,3 @@ fun SkinAlbumArt(
         Box(modifier = modifier.clip(shape).background(fallback))
     }
 }
-

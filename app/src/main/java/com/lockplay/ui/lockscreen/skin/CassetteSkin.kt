@@ -363,9 +363,11 @@ private fun Holes(s: Float, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy((16 * s).dp),
     ) {
-        Hole(s); Hole(s)
+        Hole(s)
+        Hole(s)
         Spacer(Modifier.width((48 * s).dp))
-        Hole(s); Hole(s)
+        Hole(s)
+        Hole(s)
     }
 }
 
