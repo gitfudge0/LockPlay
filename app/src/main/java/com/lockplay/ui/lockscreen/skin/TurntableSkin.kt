@@ -114,6 +114,12 @@ fun TurntableSkin(scope: SkinScope) {
                 contentAlignment = Alignment.Center,
             ) {
                 VinylDisc(scope = scope)
+                Box(
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    scope.lyricsPill?.let { pill -> pill() }
+                }
             }
 
             Spacer(Modifier.height(20.dp))

@@ -18,6 +18,7 @@ import com.lockplay.design.AppThemeProvider
 import com.lockplay.design.DefaultTheme
 import com.lockplay.design.ThemeController
 import com.lockplay.design.components.SolidBackground
+import com.lockplay.lyrics.LyricsController
 import com.lockplay.ui.gallery.PlayerGalleryScreen
 import com.lockplay.ui.lockscreen.skin.SkinController
 import com.lockplay.ui.onboarding.OnboardingController
@@ -38,6 +39,7 @@ class MainActivity : ComponentActivity() {
         val themeController = ThemeController(applicationContext)
         val skinController = SkinController(applicationContext)
         val onboardingController = OnboardingController(applicationContext)
+        val lyricsController = LyricsController(applicationContext)
 
         setContent {
             val theme by themeController.theme.collectAsStateWithLifecycle(initialValue = DefaultTheme)
@@ -57,6 +59,7 @@ class MainActivity : ComponentActivity() {
                                     PlayerGalleryScreen(
                                         skinController = skinController,
                                         themeController = themeController,
+                                        lyricsController = lyricsController,
                                     )
                                 completed == false ->
                                     OnboardingFlow(

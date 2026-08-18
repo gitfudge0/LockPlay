@@ -45,6 +45,7 @@ import com.lockplay.design.ThemeController
 import com.lockplay.design.ThemeSpec
 import com.lockplay.design.components.AppIconButton
 import com.lockplay.design.components.AppText
+import com.lockplay.lyrics.LyricsController
 import com.lockplay.model.NowPlaying
 import com.lockplay.ui.lockscreen.skin.BuiltInSkins
 import com.lockplay.ui.lockscreen.skin.DefaultSkin
@@ -63,16 +64,19 @@ import kotlinx.coroutines.launch
  *
  * @param skinController source of truth for the selected lockscreen player.
  * @param themeController source of truth for the app-wide color theme.
+ * @param lyricsController source of truth for the opt-in lyrics setting.
  */
 @Composable
 fun PlayerGalleryScreen(
     skinController: SkinController,
     themeController: ThemeController,
+    lyricsController: LyricsController,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
     val selectedSkin by skinController.skin.collectAsStateWithLifecycle(initialValue = DefaultSkin)
     val theme by themeController.theme.collectAsStateWithLifecycle(initialValue = BuiltInThemes.first())
+    val lyricsEnabled by lyricsController.enabled.collectAsStateWithLifecycle(initialValue = false)
 
     // One gradient brush per sample track, remembered so album-art placeholders survive recomposition.
     val accent = AppTheme.colors.accent
@@ -149,6 +153,12 @@ fun PlayerGalleryScreen(
                 )
             }
         }
+
+        LyricsSettingRow(
+            enabled = lyricsEnabled,
+            onEnabledChange = { value -> scope.launch { lyricsController.setEnabled(value) } },
+            modifier = Modifier.padding(horizontal = AppTheme.spacing.screenPadding),
+        )
 
         Spacer(Modifier.weight(1f))
 

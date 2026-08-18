@@ -14,8 +14,10 @@ val TurntableSkinSpec = PlayerSkin("turntable", "Turntable", PORTRAIT) { Turntab
 val GlassSkinSpec = PlayerSkin("glass", "Glass", PORTRAIT) { GlassSkin(it) }
 val EditorialSkinSpec = PlayerSkin("editorial", "Editorial", PORTRAIT) { EditorialSkin(it) }
 
-// Landscape tape, but registered PORTRAIT: it rotates its own content 90° rather than turning the device.
-val CassetteSkinSpec = PlayerSkin("cassette", "Cassette", PORTRAIT) { CassetteSkin(it) }
+// Landscape tape, two separate facts: registered PORTRAIT because the DEVICE never turns, and
+// contentRotation = 90f because the skin draws its own content sideways. Overlays above the skin
+// (the lyrics sheet) read contentRotation so they stay aligned with the tape.
+val CassetteSkinSpec = PlayerSkin("cassette", "Cassette", PORTRAIT, contentRotation = 90f) { CassetteSkin(it) }
 
 /** Source of truth for selectable skins. Order is the order shown in the picker. */
 val BuiltInSkins: List<PlayerSkin> =

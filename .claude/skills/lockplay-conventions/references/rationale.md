@@ -59,9 +59,26 @@ Splitting an oversized file into sibling files in the same package is **mechanic
 **Why:** that rename is a mechanical churn commit across files, for a convention the codebase already largely follows. These `const` values are read as *names* (`CardWidthFraction`, `FrameAspectRatio`), not as shouted markers.
 **Note:** this rule is the reason `ktlint_standard_property-naming` is disabled. Anyone re-enabling that rule is overturning S10, not fixing a config oversight.
 
+## 10. CONFLICT RESOLVED — Lyrics feature vs X3 ("never leaves the device")
+
+**The collision.** The user wants a lyrics feature. Lyrics cannot be shown without fetching them from somewhere, and X3 said NowPlaying data never leaves the device — full stop. The feature cannot exist without sending *something* off-device.
+
+**Resolution.** A narrow, named, opt-in carve-out: title, artist, album, and duration — and nothing else — may go to `lrclib.net`, and only while the user has explicitly turned the setting on; off means zero requests, enforced by `shouldFetch(enabled, title, artist)` in `LyricsMatch.kt`. A dialog explains what is sent and where before the toggle can be turned on. Fetched lyrics stay in memory only, same as the rest of NowPlaying data. The logging half of X3 is untouched — title, artist, album still never appear in a log message in `src/main/` at any level.
+
+**Rejected alternatives:**
+
+- **Local-only lyrics** — rejected because `MediaMetadata` has no standard lyrics key and `MediaListenerService` captures none, so the feature would show an empty panel for nearly every track. It is a non-feature, not a smaller feature.
+- **On by default** — rejected; a carve-out from a privacy rule has to be a deliberate act by the user, not a default they discover later.
+- **Caching lyrics to disk** — rejected; would violate X4 and X3's first bullet for a saving that doesn't matter at this scale.
+- **Sending a stable device or user identifier for better matching** — rejected outright; matching stays fuzzy on title+artist+duration and the resulting occasional wrong match is the accepted cost.
+- **Adding an HTTP client dependency (Retrofit/OkHttp/Ktor)** — rejected per X6; `HttpURLConnection` + `org.json` are on the platform and sufficient.
+
+**Revisit deliberately if** LRCLIB starts requiring auth or an API key, or the request would ever need to carry more than these four fields.
+
 ## Rule dependencies
 
 - **T2 depends on A13.** T2 ("every Compose-free logic file has a matching test") measures the files A13 creates. Reverse A13 and T2 has nothing left to apply to.
 - **W6 depends on T3.** The real-device check exists *because* composables are deliberately untested. If UI tests were ever adopted, W6's justification changes.
 - **X3 constrains A2.** The "log the cause" rule stops short of logging the data in scope. See §1.
+- **X3's network carve-out is enforced by `shouldFetch` in `LyricsMatch.kt`.** The opt-in gate is not a UI convention — the function is the single point that decides whether a request happens at all. See §10.
 - **D4 is the ledger for X1's known exception.** The `// ponytail:` marker on debug-key release signing in `app/build.gradle.kts` is the only record that this exception exists; deleting the marker deletes the tracking.

@@ -27,6 +27,11 @@ class SkinScope(
     val onPrev: () -> Unit,
     val onPlayPause: () -> Unit,
     val onNext: () -> Unit,
+    /**
+     * App-styled "Lyrics" pill from [com.lockplay.ui.lockscreen.LockscreenScreen]; null when lyrics
+     * are off. The skin only chooses where it sits, so "skins never read tokens" still holds.
+     */
+    val lyricsPill: (@Composable () -> Unit)? = null,
 ) {
     val title: String get() = state.title.ifEmpty { "Unknown title" }
     val artist: String get() = state.artist.ifEmpty { "Unknown artist" }
@@ -45,5 +50,18 @@ class PlayerSkin(
     val id: String,
     val displayName: String,
     val orientation: SkinOrientation,
+    /**
+     * Degrees the SKIN turns its OWN content by as it draws (clockwise `rotationZ`). This is NOT
+     * [orientation]: [orientation] is the DEVICE orientation the activity forces, while this is a
+     * purely internal drawing turn a skin applies inside a screen whose orientation never changed.
+     * [CassetteSkinSpec] is the only skin that does this — it stays PORTRAIT for the device and
+     * rotates its landscape tape 90° itself.
+     *
+     * Anything drawn ABOVE the skin (the lyrics overlay in
+     * [com.lockplay.ui.lockscreen.LockscreenScreen]) must apply this same rotation, or it will sit
+     * upright over sideways content. Reading [orientation] for that is the bug this field exists to
+     * prevent: every skin registers PORTRAIT, so an orientation-based rotation is always 0.
+     */
+    val contentRotation: Float = 0f,
     val content: @Composable (SkinScope) -> Unit,
 )

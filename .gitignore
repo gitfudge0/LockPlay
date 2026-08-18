@@ -9,3 +9,4 @@ captures/
 *.apk
 .kotlin/
 .shots/
+.fudge-ship/

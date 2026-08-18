@@ -124,7 +124,12 @@ private fun CassetteBody(scope: SkinScope) {
                 Deck(scope, s)
                 Spacer(Modifier.height((16 * s).dp))
                 Transport(scope, s)
-                Spacer(Modifier.weight(1f))
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    scope.lyricsPill?.let { pill -> pill() }
+                }
 
                 Grade(s, modifier = Modifier.align(Alignment.End))
                 Spacer(Modifier.height((6 * s).dp))

@@ -7,15 +7,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lockplay.design.AppThemeProvider
+import com.lockplay.design.DefaultTheme
+import com.lockplay.design.ThemeController
+import com.lockplay.lyrics.LyricsController
 import com.lockplay.trigger.LockLauncher
 import com.lockplay.ui.lockscreen.skin.DefaultSkin
 import com.lockplay.ui.lockscreen.skin.SkinController
 import com.lockplay.ui.lockscreen.skin.SkinOrientation
+import kotlinx.coroutines.launch
 
 /**
  * Activity shown over the keyguard when music is playing. It is purely a host: it configures the
@@ -44,11 +50,18 @@ class LockscreenActivity : ComponentActivity() {
         LockLauncher.cancel(this)
 
         val skinController = SkinController(applicationContext)
+        val themeController = ThemeController(applicationContext)
+        val lyricsController = LyricsController(applicationContext)
 
         setContent {
             val skin by skinController.skin.collectAsStateWithLifecycle(initialValue = DefaultSkin)
             val vm: LockscreenViewModel = viewModel()
             val state by vm.state.collectAsStateWithLifecycle()
+            val theme by themeController.theme.collectAsStateWithLifecycle(initialValue = DefaultTheme)
+            val lyricsEnabled by lyricsController.enabled.collectAsStateWithLifecycle(initialValue = false)
+            val lyricsHintSeen by lyricsController.hintSeen.collectAsStateWithLifecycle(initialValue = false)
+            val coachMarkSeen by lyricsController.coachMarkSeen.collectAsStateWithLifecycle(initialValue = false)
+            val scope = rememberCoroutineScope()
 
             // Force the orientation the active skin was designed for. The built-in skins are all
             // portrait today; the LANDSCAPE arm stays for any future device-shaped skin.
@@ -64,15 +77,24 @@ class LockscreenActivity : ComponentActivity() {
                 if (!state.isActive) finish()
             }
 
-            LockscreenScreen(
-                skin = skin,
-                state = state,
-                onSeek = vm::seekTo,
-                onPrev = vm::previous,
-                onPlayPause = vm::togglePlayPause,
-                onNext = vm::next,
-                onUnlock = { finish() },
-            )
+            // Tokens for the lyrics overlay only. Skins never read them (S6), so this does not
+            // restyle any skin.
+            AppThemeProvider(theme) {
+                LockscreenScreen(
+                    skin = skin,
+                    state = state,
+                    onSeek = vm::seekTo,
+                    onPrev = vm::previous,
+                    onPlayPause = vm::togglePlayPause,
+                    onNext = vm::next,
+                    onUnlock = { finish() },
+                    lyricsEnabled = lyricsEnabled,
+                    lyricsHintSeen = lyricsHintSeen,
+                    onLyricsHintSeen = { scope.launch { lyricsController.markHintSeen() } },
+                    coachMarkSeen = coachMarkSeen,
+                    onCoachMarkSeen = { scope.launch { lyricsController.markCoachMarkSeen() } },
+                )
+            }
         }
     }
 }

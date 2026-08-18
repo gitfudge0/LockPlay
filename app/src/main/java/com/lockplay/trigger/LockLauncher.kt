@@ -59,8 +59,15 @@ object LockLauncher {
         when {
             canUseFullScreenIntent(nm) -> {
                 Log.i(TAG, "Tier 1: full-screen-intent")
+                // The notification is only a vehicle for the full-screen intent — once the activity
+                // is up there is nothing left to tap, but the heads-up banner would otherwise ride
+                // out its timeout on top of the lockscreen we just launched. LockscreenActivity
+                // cancels it in onCreate; this is the backstop for when the activity never arrives.
+                // ponytail: 1s is "long enough to launch" — raise it only if a slow device shows the
+                // lockscreen after the notification is already gone.
                 val notification = baseBuilder(context, pendingIntent)
                     .setFullScreenIntent(pendingIntent, true)
+                    .setTimeoutAfter(1_000)
                     .build()
                 nm.notify(NOTIFICATION_ID, notification)
             }

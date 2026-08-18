@@ -37,4 +37,18 @@ class SkinTest {
         assertEquals(SkinOrientation.PORTRAIT, TurntableSkinSpec.orientation)
         assertEquals(SkinOrientation.PORTRAIT, GlassSkinSpec.orientation)
     }
+
+    @Test
+    fun `only the cassette rotates its own content`() {
+        assertEquals(90f, CassetteSkinSpec.contentRotation, 0f)
+        assertEquals(0f, CardSkinSpec.contentRotation, 0f)
+        assertEquals(0f, TurntableSkinSpec.contentRotation, 0f)
+        assertEquals(0f, GlassSkinSpec.contentRotation, 0f)
+        assertEquals(0f, EditorialSkinSpec.contentRotation, 0f)
+    }
+
+    @Test
+    fun `every skin declares a quarter-turn multiple for its content rotation`() {
+        assertTrue(BuiltInSkins.all { it.contentRotation % 90f == 0f })
+    }
 }

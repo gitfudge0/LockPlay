@@ -125,14 +125,24 @@ fun CardSkin(scope: SkinScope) {
             Spacer(Modifier.height(20.dp))
 
             // Album art: square, 26dp horizontal margin (already in parent padding), drop shadow
-            SkinAlbumArt(
-                scope = scope,
-                shape = RoundedCornerShape(26.dp),
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .shadow(elevation = 12.dp, shape = RoundedCornerShape(26.dp)),
-            )
+                    .aspectRatio(1f),
+            ) {
+                SkinAlbumArt(
+                    scope = scope,
+                    shape = RoundedCornerShape(26.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .shadow(elevation = 12.dp, shape = RoundedCornerShape(26.dp)),
+                )
+                scope.lyricsPill?.let { pill ->
+                    Box(
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
+                    ) { pill() }
+                }
+            }
 
             Spacer(Modifier.height(24.dp))
 

@@ -112,7 +112,12 @@ fun GlassSkin(scope: SkinScope) {
             GlassTimesRow(scope = scope, muted = inkMuted)
 
             // …then the title/controls cluster centres in the remaining space.
-            Spacer(Modifier.weight(1f))
+            Box(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                scope.lyricsPill?.let { pill -> pill() }
+            }
 
             // Title
             Text(

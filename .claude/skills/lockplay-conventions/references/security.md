@@ -22,9 +22,9 @@ Title, artist, album, and album art:
 
 - **never persisted** — not to DataStore, not to a file, not to a cache you control;
 - **never included in a log message at any level** in `src/main/` — not `Log.d`, not while debugging, not temporarily. Log the failure and, if you need to identify the source, the controller's **package name**. Metadata in a `Log.d` is allowed only in `src/debug/` sources;
-- **never leaves the device** — no analytics, no crash-reporter breadcrumbs, no network call carrying it.
+- **never leaves the device, with one named exception**: title, artist, album, and duration — and nothing else, not album art, not listening history, not a device or user identifier — may be sent to `lrclib.net` to fetch lyrics, and only while the user has explicitly turned that opt-in setting on; off means zero requests, enforced by `shouldFetch(enabled, title, artist)` in `LyricsMatch.kt`. Analytics and crash-reporter breadcrumbs remain **absolutely forbidden, no exception**. Fetched lyrics are held in memory only, same as the rest of NowPlaying data.
 
-It lives in `MediaRepository`'s `StateFlow` and dies with the process. This constraint overrides the natural instinct in A2 to log "what we were handling"; see `rationale.md` §1.
+It lives in `MediaRepository`'s `StateFlow` and dies with the process. This constraint overrides the natural instinct in A2 to log "what we were handling"; see `rationale.md` §1 and §10.
 
 ## X4 — DataStore holds preferences only
 

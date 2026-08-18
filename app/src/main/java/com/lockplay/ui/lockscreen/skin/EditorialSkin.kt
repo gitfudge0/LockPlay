@@ -99,7 +99,14 @@ fun EditorialSkin(scope: SkinScope) {
             )
 
             // Drop the meta/controls cluster to ~30% down the screen.
-            Spacer(Modifier.fillMaxHeight(0.30f))
+            Box(
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(0.30f),
+                contentAlignment = Alignment.BottomCenter,
+            ) {
+                scope.lyricsPill?.let { pill ->
+                    Box(modifier = Modifier.padding(bottom = 20.dp * s)) { pill() }
+                }
+            }
 
             // Song title — the poster headline.
             Text(

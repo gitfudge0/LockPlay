@@ -231,6 +231,43 @@ fun AppOutlineButton(
     }
 }
 
+/**
+ * Modal confirmation dialog: title, body copy, and a confirm/dismiss action pair. Styled entirely
+ * from [AppTheme] tokens (S7) — the app's first dialog, so this sets the pattern others should copy.
+ * Dismissable via back press or outside tap, both routed to [onDismiss].
+ */
+@Composable
+fun AppDialog(
+    title: String,
+    body: String,
+    confirmLabel: String,
+    dismissLabel: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .background(AppTheme.colors.surfaceElevated, AppTheme.shapes.large)
+                .padding(AppTheme.spacing.lg),
+        ) {
+            androidx.compose.foundation.layout.Column(
+                verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.md),
+            ) {
+                AppText(title, AppTheme.typography.title, color = AppTheme.colors.textPrimary)
+                AppText(body, AppTheme.typography.body, color = AppTheme.colors.textSecondary)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.sm, Alignment.End),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    AppOutlineButton(label = dismissLabel, onClick = onDismiss)
+                    AppButton(label = confirmLabel, onClick = onConfirm)
+                }
+            }
+        }
+    }
+}
+
 /** Full-screen themed background fill (used by SOLID themes and as the base under GLASS). */
 @Composable
 fun SolidBackground(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
