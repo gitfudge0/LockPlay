@@ -1,122 +1,490 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Cassette skin</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>LockPlay — Lyrics Affordance Options</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  /* Cassette "mixtape" skin — the entire screen IS the cassette.
-     Now-playing track is written on the label; transport is printed on the shell.
-     Everything sized in vmin so the tape fills the screen in any orientation. */
-  :root{
-    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,monospace;
-    --grotesk:"Helvetica Neue",Arial,sans-serif;
-    --marker:"Bradley Hand","Comic Sans MS",cursive;
-    --red:#E5402A;
-    --cream:#e9e6df;
+  :root {
+    --bg:#060607;
+    --surface:#0B0B0D;
+    --surface-variant:#1B1B1F;
+    --surface-elevated:#131316;
+    --accent:#FF6B3D;
+    --accent-strong:#E5552A;
+    --accent-muted:rgba(255,107,61,.16);
+    --accent-on-surface:#FF8A63;
+    --text-primary:#F5F4F2;
+    --text-secondary:rgba(245,244,242,.66);
+    --text-tertiary:rgba(245,244,242,.42);
+    --border-subtle:rgba(245,244,242,.12);
+    --fill-ghost:rgba(245,244,242,.08);
+    --fill-ghost-strong:rgba(245,244,242,.14);
+    --r-s:8px; --r-m:14px; --r-l:20px;
+
+    --board-bg:#090909;
+    --fg:var(--text-primary);
+    --muted:var(--text-secondary);
+    --border:var(--border-subtle);
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{background:#000;overflow:hidden;font-family:var(--grotesk)}
 
-  .cassette{position:fixed;inset:0;background:#0c0b0a;color:var(--cream);overflow:hidden;
-            display:flex;flex-direction:column;padding:3.4vmin;
-            box-shadow:inset 0 .6vmin .8vmin rgba(255,255,255,.06)}
+  * { box-sizing: border-box; }
 
-  /* label / now-playing sticker */
-  .label{flex:0 0 34vmin;position:relative;background:#f5f3ee;border-radius:1.4vmin;
-         overflow:hidden;color:#161514;box-shadow:0 .4vmin .8vmin rgba(0,0,0,.4)}
-  .stripe{position:absolute;top:0;left:0;right:0;height:3vmin;background:var(--red)}
-  .meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:2vmin;
-        letter-spacing:.04em;padding:4.6vmin 3.2vmin 0}
-  .side{position:absolute;left:3.2vmin;top:9.4vmin;background:#161514;color:#f5f3ee;
-        font-family:var(--grotesk);font-weight:700;font-size:3.6vmin;line-height:1;
-        padding:.9vmin 1.2vmin;border-radius:.5vmin}
-  .np{position:absolute;left:0;right:0;top:7vmin;text-align:center;font-family:var(--marker)}
-  .np .t{font-size:11vmin;line-height:1;font-weight:700}
-  .np .a{font-size:4.4vmin;line-height:1;margin-top:1.8vmin;color:#3a3833}
+  html, body {
+    margin:0; padding:0;
+    background: var(--board-bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
 
-  /* black shell body: reels, printed controls, flavor text, lip holes */
-  .body{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;
-        justify-content:center;gap:4vmin;padding-bottom:15vmin}
-  .deckrow{display:flex;align-items:center;justify-content:center;gap:5vmin;width:100%}
-  .grille{width:19vmin;height:26vmin;
-          background:repeating-linear-gradient(90deg,
-                     rgba(255,255,255,.11) 0 .4vmin,transparent .4vmin 1.3vmin)}
-  .deck{display:flex;align-items:center;gap:2vmin}
-  .hub{width:22vmin;height:22vmin;border-radius:50%;background:var(--cream);position:relative;
-       box-shadow:0 0 0 .4vmin rgba(0,0,0,.25),inset 0 0 1.4vmin rgba(0,0,0,.2);
-       animation:spin 3.5s linear infinite}
-  .hub::before{content:"";position:absolute;inset:2.8vmin;border-radius:50%;
-       background:repeating-conic-gradient(#0d0d0d 0 15deg,var(--cream) 15deg 30deg)}
-  .hub::after{content:"";position:absolute;inset:7vmin;border-radius:50%;background:#0d0d0d}
-  .cwin{width:14vmin;height:20vmin;background:#080807;border-radius:1.8vmin;
-        display:flex;align-items:center;justify-content:center;
-        box-shadow:inset 0 0 0 .4vmin rgba(255,255,255,.08)}
-  .spool{width:6vmin;height:16vmin;background:#f2f0ea;
-         clip-path:polygon(0 0,100% 0,56% 50%,100% 100%,0 100%,44% 50%)}
+  /* ---- pan/zoom viewport ---- */
+  #viewport {
+    position: fixed; inset: 0; overflow: hidden; cursor: grab;
+    background-image: radial-gradient(circle, #1e1e21 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  #viewport.panning { cursor: grabbing; }
+  #canvas { position: absolute; top:0; left:0; transform-origin: 0 0; padding: 60px; width: max-content; }
 
-  /* printed transport + counter */
-  .player{width:min(64vmin,82%);display:flex;flex-direction:column;align-items:center;gap:2.4vmin}
-  .bar{width:100%;height:.7vmin;background:rgba(255,255,255,.16);position:relative;border-radius:1vmin}
-  .bar>i{position:absolute;left:0;top:0;height:100%;width:44%;background:var(--red);border-radius:1vmin}
-  .bar>b{position:absolute;left:44%;top:50%;width:2vmin;height:2vmin;border-radius:50%;
-         background:var(--red);transform:translate(-50%,-50%)}
-  .times{width:100%;display:flex;justify-content:space-between;font-family:var(--mono);
-         font-size:2vmin;color:#9a968d;letter-spacing:.05em}
-  .ctrls{display:flex;align-items:center;gap:6vmin;margin-top:1vmin}
-  .ctrls .ic{font-size:5vmin;font-family:var(--mono);color:var(--cream)}
-  .play{width:9.5vmin;height:9.5vmin;border-radius:50%;background:var(--cream);color:#0c0b0a;
-        display:flex;align-items:center;justify-content:center;font-size:4vmin}
+  .hud {
+    position: fixed; right:16px; bottom:16px; z-index:10; display:flex; gap:6px; align-items:center;
+    background: var(--surface-elevated); border:1px solid var(--border-subtle); border-radius:8px; padding:6px 8px;
+    font-size:12px; box-shadow: 0 4px 18px rgba(0,0,0,.6); color: var(--text-primary);
+  }
+  .hud button { border:1px solid var(--border-subtle); background: var(--surface-variant); color: var(--text-primary); border-radius:5px; padding:3px 9px; font: inherit; cursor:pointer; }
+  .hud button:hover { background: var(--fill-ghost-strong); }
+  .hud .zoom-pct { min-width:44px; text-align:center; color: var(--text-secondary); }
 
-  /* flavor + lip holes */
-  .spec{position:absolute;left:0;right:16vmin;bottom:8vmin;text-align:center;
-        font-size:2.4vmin;color:#d7d4cc;letter-spacing:.02em}
-  .grade{position:absolute;right:1vmin;bottom:6.6vmin;display:flex;background:var(--red);
-         color:#fff;font-weight:700;font-size:3.8vmin;line-height:1;border-radius:.5vmin;overflow:hidden}
-  .grade b{padding:1.1vmin 1.1vmin 1.1vmin 1.6vmin}
-  .grade i{padding:1.1vmin 1.6vmin;font-style:normal;border-left:.25vmin solid rgba(255,255,255,.55)}
-  /* recessed lip plate with drilled holes */
-  .holes{position:absolute;left:50%;bottom:1.4vmin;transform:translateX(-50%);
-         display:flex;align-items:center;gap:2.2vmin;padding:1.4vmin 3.4vmin;border-radius:2vmin;
-         background:rgba(0,0,0,.32);
-         box-shadow:inset 0 .35vmin .5vmin rgba(0,0,0,.75),inset 0 -.2vmin .3vmin rgba(255,255,255,.05)}
-  .holes b{width:1.8vmin;height:2.8vmin;border-radius:50%;
-           background:radial-gradient(60% 45% at 50% 32%,#1a1714,#000 80%);
-           box-shadow:inset 0 .3vmin .35vmin rgba(0,0,0,.9),0 .2vmin .25vmin rgba(255,255,255,.06)}
-  .holes .gap{width:5vmin}
-  @keyframes spin{to{transform:rotate(360deg)}}
-</style></head>
+  /* ---- header + legend ---- */
+  .page-header { margin-bottom: 30px; }
+  .page-header h1 { font-size:28px; font-weight:700; margin:0 0 8px; letter-spacing:-.015em; }
+  .page-header .subtitle { font-size:14px; color: var(--text-secondary); margin:0 0 18px; max-width:820px; line-height:1.6; }
+  .legend {
+    display:inline-flex; gap:20px; flex-wrap:wrap; align-items:center;
+    background: var(--surface-elevated); border:1px solid var(--border-subtle);
+    border-radius: var(--r-m); padding:11px 18px; font-size:12px; color: var(--text-secondary);
+  }
+  .legend b { color: var(--text-primary); }
+  .legend .tag { display:inline-flex; align-items:center; gap:7px; }
+  .legend .swatch { width:10px; height:10px; border-radius:3px; display:inline-block; }
+  .swatch.before { background:#8A8A90; }
+  .swatch.v1 { background: var(--accent); }
+  .swatch.v2 { background: #FFB27A; }
+  .swatch.v3 { background: var(--accent-strong); }
+
+  /* ---- section ---- */
+  .section-heading {
+    font-size:19px; font-weight:700; margin:64px 0 4px; padding-bottom:10px;
+    border-bottom:2px solid var(--border-subtle); display:flex; align-items:baseline; gap:12px;
+  }
+  .section-heading .sub { font-size:13px; font-weight:400; color: var(--text-tertiary); }
+  .section-letter {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:27px; height:27px; border-radius:7px;
+    background: var(--accent); color:#160800; font-size:13px; font-weight:800; align-self:center;
+  }
+
+  /* ---- frame layout ---- */
+  .frame-row { display:flex; gap:34px; margin-top:26px; align-items:flex-start; }
+  .frame { width:390px; }
+  .frame-caption { margin-bottom:12px; min-height:56px; }
+  .frame-id {
+    display:inline-block; font-size:11px; font-weight:800; letter-spacing:.04em;
+    color:#160800; background: var(--accent); border-radius:4px; padding:2px 8px; margin-right:9px;
+  }
+  .frame-name { font-size:14px; font-weight:600; color: var(--text-primary); }
+  .frame-desc { font-size:12px; color: var(--text-secondary); margin:6px 0 0; line-height:1.55; }
+
+  .frame-card {
+    background: var(--bg); border:1px solid var(--border-subtle); border-radius:26px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.5), 0 18px 50px rgba(0,0,0,.55);
+    padding:0; overflow:hidden;
+  }
+  .frame-card.mobile { width:390px; height:844px; }
+
+  .connector-row { display:flex; align-items:center; color: var(--text-tertiary); font-size:26px; align-self:flex-start; padding-top:400px; }
+
+  .sticky-note {
+    display:inline-block; background:#FFF8C5; border:1px solid #E6D97A; color:#4A4320;
+    font-size:12.5px; line-height:1.55; padding:14px 16px; max-width:460px; border-radius:3px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.45); transform: rotate(-1deg); margin:34px 0 0;
+  }
+  .sticky-note b { color:#2C2810; }
+  .sticky-note.tradeoff { background:#1B1B1F; border:1px solid var(--border-subtle); color: var(--text-secondary); transform:none; max-width:640px; }
+  .sticky-note.tradeoff b { color: var(--accent-on-surface); }
+  .note-row { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+
+  /* ================= PHONE SCREEN ================= */
+  .phone { position:relative; width:390px; height:844px; background: var(--bg); color: var(--text-primary); display:flex; flex-direction:column; overflow:hidden; }
+
+  .statusbar { display:flex; align-items:center; justify-content:space-between; padding:14px 26px 0; font-size:13px; font-weight:600; color: var(--text-secondary); letter-spacing:.01em; }
+  .statusbar .sb-icons { display:flex; gap:6px; align-items:center; opacity:.7; }
+
+  .player { flex:1; display:flex; flex-direction:column; padding:0 24px 0; }
+
+  .art-wrap { position:relative; margin-top:26px; }
+  .art { width:342px; height:342px; border-radius: var(--r-l); overflow:hidden; display:block; box-shadow: 0 18px 44px rgba(0,0,0,.6); }
+
+  .pill-slot { margin-top:20px; display:flex; justify-content:center; min-height:36px; position:relative; }
+  .pill {
+    display:inline-flex; align-items:center; gap:8px; border-radius:999px;
+    background: var(--fill-ghost); border:1px solid var(--border-subtle);
+    color: var(--text-secondary); font-size:13px; font-weight:600; padding:8px 16px; letter-spacing:.01em;
+  }
+  .pill.active { background: var(--accent-muted); border-color: rgba(255,107,61,.34); color: var(--accent-on-surface); }
+  .pill svg { display:block; }
+
+  .meta { margin-top:22px; }
+  .meta .title { font-size:22px; font-weight:700; letter-spacing:-.01em; margin:0; }
+  .meta .artist { font-size:14px; color: var(--text-secondary); margin:6px 0 0; }
+
+  .seek { margin-top:24px; }
+  .seek .track { height:3px; border-radius:999px; background: var(--fill-ghost-strong); overflow:hidden; }
+  .seek .fill { height:100%; width:41%; background: var(--accent); border-radius:999px; }
+  .seek .times { display:flex; justify-content:space-between; margin-top:9px; font-size:11px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+  .transport { margin-top:24px; display:flex; align-items:center; justify-content:center; gap:38px; }
+  .tbtn { width:48px; height:48px; display:flex; align-items:center; justify-content:center; color: var(--text-primary); opacity:.86; }
+  .play { width:72px; height:72px; border-radius:999px; background: var(--accent); display:flex; align-items:center; justify-content:center; color:#160800; box-shadow:0 8px 26px rgba(255,107,61,.32); }
+
+  .unlock-hint { margin-top:auto; padding:0 0 22px; text-align:center; font-size:12px; color: var(--text-tertiary); display:flex; flex-direction:column; align-items:center; gap:7px; }
+  .unlock-hint .grabber { width:112px; height:4px; border-radius:999px; background: var(--fill-ghost-strong); }
+
+  /* ---- lyrics overlay ---- */
+  .overlay { position:absolute; inset:0; display:flex; flex-direction:column;
+    background: linear-gradient(180deg, rgba(6,6,7,.93) 0%, rgba(6,6,7,.88) 42%, rgba(6,6,7,.74) 74%, rgba(6,6,7,.62) 100%); }
+  .overlay-topbar { display:flex; align-items:center; justify-content:space-between; padding:16px 24px 0; }
+  .overlay-topbar .ov-title { font-size:16px; font-weight:700; }
+  .close-btn { width:34px; height:34px; border-radius:999px; background: var(--fill-ghost); border:1px solid var(--border-subtle); display:flex; align-items:center; justify-content:center; color: var(--text-secondary); }
+  .lyrics { flex:1; display:flex; flex-direction:column; justify-content:center; gap:20px; padding:0 30px; }
+  .lyric { font-size:21px; font-weight:600; line-height:1.34; letter-spacing:-.005em; }
+  .lyric.active { opacity:1; color: var(--text-primary); }
+  .lyric.n1 { opacity:.55; } .lyric.n2 { opacity:.35; } .lyric.n3 { opacity:.22; }
+  .lyric.active::before { content:""; position:absolute; left:14px; width:3px; height:26px; border-radius:999px; background: var(--accent); margin-top:4px; }
+  .lyric.active { position:relative; }
+
+  .cap-chip {
+    align-self:center; display:inline-flex; align-items:center; gap:7px; border-radius:999px;
+    background: var(--fill-ghost); border:1px solid var(--border-subtle); color: var(--text-secondary);
+    font-size:12px; font-weight:600; padding:7px 14px; margin:6px 0 0;
+  }
+
+  /* ---- edge tab (variant 2) ---- */
+  .edge-tab {
+    position:absolute; right:0; width:26px; height:104px;
+    background: var(--accent-muted); border:1px solid rgba(255,107,61,.30); border-right:0;
+    border-radius: var(--r-m) 0 0 var(--r-m);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+    color: var(--accent-on-surface); box-shadow:-6px 0 20px rgba(255,107,61,.10);
+  }
+  .edge-tab .vlabel { writing-mode: vertical-rl; text-orientation: mixed; font-size:8.5px; font-weight:800; letter-spacing:.22em; }
+
+  /* ---- nudge chip (variant 2, first run) ---- */
+  .nudge {
+    position:absolute; right:22px; display:inline-flex; align-items:center; gap:8px;
+    background: var(--surface-elevated); border:1px solid rgba(255,107,61,.34); border-radius:999px;
+    padding:9px 15px; font-size:12.5px; font-weight:600; color: var(--text-primary);
+    box-shadow:0 10px 28px rgba(0,0,0,.62); overflow:hidden;
+  }
+  .nudge::after { content:""; position:absolute; inset:0; background: linear-gradient(100deg, transparent 30%, rgba(255,107,61,.20) 50%, transparent 70%); }
+  .nudge .dot { width:6px; height:6px; border-radius:999px; background: var(--accent); }
+
+  /* ---- coach mark (variant 3) ---- */
+  .coach { position:absolute; left:50%; transform:translateX(-50%); width:284px; z-index:3; }
+  .coach .bubble {
+    background: var(--accent); color:#1A0700; border-radius: var(--r-m);
+    padding:12px 14px; font-size:12.5px; font-weight:600; line-height:1.45;
+    box-shadow:0 12px 32px rgba(0,0,0,.6);
+  }
+  .coach .bubble .dismiss { display:block; margin-top:8px; font-size:11px; font-weight:800; letter-spacing:.06em; opacity:.72; }
+  .coach .arrow { width:14px; height:14px; background: var(--accent); transform:rotate(45deg); margin:-7px auto 0; border-radius:2px; }
+  .coach-scrim { position:absolute; inset:0; background: rgba(6,6,7,.55); z-index:2; }
+  .pill.spotlit { position:relative; z-index:3; box-shadow:0 0 0 6px rgba(255,107,61,.18); }
+</style>
+</head>
 <body>
-  <div class="cassette">
-    <div class="label">
-      <div class="stripe"></div>
-      <div class="meta"><span>ACOUSTIC CASSETTE</span><span>N.R.[&nbsp;&nbsp;] ☐IN ☐OUT</span></div>
-      <span class="side">B</span>
-      <div class="np">
-        <div class="t">Midnight City</div>
-        <div class="a">M83</div>
-      </div>
-    </div>
+<div class="hud">
+  <button type="button" id="zoomOut">−</button>
+  <span class="zoom-pct" id="zoomPct">100%</span>
+  <button type="button" id="zoomIn">+</button>
+  <button type="button" id="zoomFit">Fit</button>
+</div>
+<div id="viewport"><div id="canvas">
 
-    <div class="body">
-      <div class="deckrow">
-        <div class="grille"></div>
-        <div class="deck">
-          <div class="hub"></div>
-          <div class="cwin"><div class="spool"></div></div>
-          <div class="hub"></div>
-        </div>
-        <div class="grille"></div>
-      </div>
-
-      <div class="player">
-        <div class="bar"><i></i><b></b></div>
-        <div class="times"><span>1:35</span><span>3:36</span></div>
-        <div class="ctrls"><span class="ic">⟵</span><div class="play">▶</div><span class="ic">⟶</span></div>
-      </div>
-
-      <div class="spec">Normal Bias 120μsEQ</div>
-      <div class="grade"><b>A</b><i>60</i></div>
-      <div class="holes"><b></b><b></b><span class="gap"></span><b></b><b></b></div>
+  <div class="page-header">
+    <h1>LockPlay — Lyrics Affordance Options</h1>
+    <p class="subtitle">Today, lyrics open and close on an <b>invisible</b> horizontal swipe over the album art — nothing on screen says they exist, and nothing says how to get out. Three candidate affordances, each rendered at true phone size against the default dark skin. Pick a direction.</p>
+    <div class="legend">
+      <span class="tag"><span class="swatch before"></span><b>BEFORE</b> = current shipped behaviour</span>
+      <span class="tag"><span class="swatch v1"></span><b>V1</b> Lyrics pill</span>
+      <span class="tag"><span class="swatch v2"></span><b>V2</b> Edge peek + swipe hint</span>
+      <span class="tag"><span class="swatch v3"></span><b>V3</b> Pill + coach mark</span>
     </div>
   </div>
-</body></html>
+
+  <div id="sections"></div>
+
+</div></div>
+
+<script>
+(function () {
+  /* ---------------- inline icon set ---------------- */
+  var I = {
+    prev: '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5.5a1 1 0 0 1 2 0v5.1l8.4-5.4A1 1 0 0 1 19 6v12a1 1 0 0 1-1.6.8L9 13.4v5.1a1 1 0 0 1-2 0v-13Z"/></svg>',
+    next: '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M17 5.5a1 1 0 0 0-2 0v5.1L6.6 5.2A1 1 0 0 0 5 6v12a1 1 0 0 0 1.6.8l8.4-5.4v5.1a1 1 0 0 0 2 0v-13Z"/></svg>',
+    play: '<svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2a1 1 0 0 1 1.5-.87l9.1 6.8a1 1 0 0 1 0 1.74l-9.1 6.8A1 1 0 0 1 8 18.8V5.2Z"/></svg>',
+    note: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 3.4v11.2a3.4 3.4 0 1 1-2-3.1V7.3l-8 1.9v8.4a3.4 3.4 0 1 1-2-3.1V6.4l12-3Z"/></svg>',
+    close: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    closeBig: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    chevL: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+    chevR: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+    chevUp: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
+    sbIcons: '<svg width="46" height="12" viewBox="0 0 46 12" fill="currentColor">'
+      + '<path d="M0 8.4 2 6.2A7.6 7.6 0 0 1 12 6.2l2-2.2a10.6 10.6 0 0 0-14 0Z" opacity=".9"/>'
+      + '<path d="M3.4 10 7 12l3.6-2A5 5 0 0 0 3.4 10Z"/>'
+      + '<rect x="19" y="7" width="2.6" height="4" rx="1"/><rect x="23.4" y="5" width="2.6" height="6" rx="1"/>'
+      + '<rect x="27.8" y="3" width="2.6" height="8" rx="1"/><rect x="32.2" y="1" width="2.6" height="10" rx="1" opacity=".45"/>'
+      + '<rect x="37.6" y="2" width="6.6" height="9" rx="2" opacity=".55"/><rect x="38.8" y="3.4" width="4.2" height="6.2" rx="1.2"/>'
+      + '</svg>'
+  };
+
+  /* ---------------- album art (inline SVG placeholder) ---------------- */
+  function art(uid) {
+    return '<svg class="art" viewBox="0 0 342 342" xmlns="http://www.w3.org/2000/svg">'
+      + '<defs>'
+      + '<linearGradient id="g1' + uid + '" x1="0" y1="0" x2="1" y2="1">'
+      + '<stop offset="0%" stop-color="#FF8A3D"/><stop offset="46%" stop-color="#C2325C"/><stop offset="100%" stop-color="#2A1145"/></linearGradient>'
+      + '<radialGradient id="g2' + uid + '" cx="26%" cy="22%" r="72%">'
+      + '<stop offset="0%" stop-color="#FFD08A" stop-opacity=".92"/><stop offset="58%" stop-color="#FF6B3D" stop-opacity=".18"/>'
+      + '<stop offset="100%" stop-color="#1A0A2E" stop-opacity="0"/></radialGradient>'
+      + '<linearGradient id="g3' + uid + '" x1="0" y1="1" x2="1" y2="0">'
+      + '<stop offset="0%" stop-color="#170824" stop-opacity=".92"/><stop offset="100%" stop-color="#170824" stop-opacity="0"/></linearGradient>'
+      + '</defs>'
+      + '<rect width="342" height="342" fill="url(#g1' + uid + ')"/>'
+      + '<rect width="342" height="342" fill="url(#g2' + uid + ')"/>'
+      + '<path d="M0 236c72-16 116-70 176-70s108 42 166 26v150H0Z" fill="url(#g3' + uid + ')"/>'
+      + '<g fill="none" stroke="#FFEBD6" stroke-opacity=".30" stroke-width="1.4">'
+      + '<circle cx="238" cy="118" r="42"/><circle cx="238" cy="118" r="62"/><circle cx="238" cy="118" r="84"/></g>'
+      + '<circle cx="238" cy="118" r="19" fill="#FFE3C8" fill-opacity=".82"/>'
+      + '<g fill="#060607" fill-opacity=".30"><rect x="0" y="292" width="342" height="50"/></g>'
+      + '<text x="24" y="322" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="13" font-weight="700"'
+      + ' letter-spacing="3.4" fill="#F5F4F2" fill-opacity=".78">SLOW BURN</text>'
+      + '</svg>';
+  }
+
+  /* ---------------- lyric content ---------------- */
+  var LYRICS = [
+    { t: 'Porch light still on for nobody', c: 'n2' },
+    { t: 'Counting headlights like they’re coming home', c: 'n1' },
+    { t: 'You called it a slow burn, said stay a while', c: 'active' },
+    { t: 'So I’m still here holding the smoke', c: 'n1' },
+    { t: 'Learning how the quiet sounds', c: 'n2' },
+    { t: 'When you’re not in it', c: 'n3' }
+  ];
+  function lyricLines() {
+    return LYRICS.map(function (l) { return '<div class="lyric ' + l.c + '">' + l.t + '</div>'; }).join('');
+  }
+
+  /* ---------------- phone screen ---------------- */
+  var uidN = 0;
+  function phone(o) {
+    o = o || {};
+    var uid = 'u' + (++uidN);
+    var h = '<div class="phone">';
+
+    h += '<div class="statusbar"><span>9:41</span><span class="sb-icons">' + I.sbIcons + '</span></div>';
+    h += '<div class="player">';
+
+    /* artwork + edge tab / nudge anchored to it */
+    h += '<div class="art-wrap">' + art(uid);
+    if (o.edgeTab) {
+      h += '<div class="edge-tab" style="top:118px;right:-24px">' + I.chevL
+         + '<span class="vlabel">LYRICS</span></div>';
+    }
+    if (o.nudge) {
+      h += '<div class="nudge" style="bottom:26px;right:-12px">' + I.chevL
+         + '<span>Swipe for lyrics</span><span class="dot"></span></div>';
+    }
+    h += '</div>';
+
+    /* lyrics pill slot */
+    h += '<div class="pill-slot">';
+    if (o.pill === 'idle') {
+      h += '<span class="pill' + (o.spotlight ? ' spotlit' : '') + '">' + I.note + 'Lyrics</span>';
+    } else if (o.pill === 'active') {
+      h += '<span class="pill active">' + I.close + 'Lyrics</span>';
+    }
+    h += '</div>';
+
+    /* meta */
+    h += '<div class="meta"><p class="title">Slow Burn</p><p class="artist">Mave &amp; The Hollow</p></div>';
+
+    /* seek */
+    h += '<div class="seek"><div class="track"><div class="fill"></div></div>'
+       + '<div class="times"><span>1:42</span><span>-2:26</span></div></div>';
+
+    /* transport */
+    h += '<div class="transport">'
+       + '<span class="tbtn">' + I.prev + '</span>'
+       + '<span class="play">' + I.play + '</span>'
+       + '<span class="tbtn">' + I.next + '</span></div>';
+
+    h += '<div class="unlock-hint"><span class="grabber"></span>'
+       + '<span style="display:inline-flex;align-items:center;gap:5px">' + I.chevUp + 'Swipe up to unlock</span></div>';
+
+    h += '</div>'; /* /player */
+
+    /* ---- overlay ---- */
+    if (o.overlay) {
+      h += '<div class="overlay">';
+      if (o.overlayTopBar) {
+        h += '<div class="overlay-topbar"><span class="ov-title">Lyrics</span>'
+           + '<span class="close-btn">' + I.closeBig + '</span></div>';
+      } else {
+        h += '<div class="statusbar" style="visibility:hidden">.</div>';
+      }
+      if (o.overlayChip) {
+        h += '<span class="cap-chip">' + I.chevL + 'Swipe to close</span>';
+      }
+      if (o.overlayPill) {
+        h += '<div class="pill-slot" style="margin-top:18px"><span class="pill active">' + I.close + 'Lyrics</span></div>';
+      }
+      h += '<div class="lyrics">' + lyricLines() + '</div>';
+
+      /* transport shows through the softer bottom of the scrim */
+      h += '<div style="padding:0 24px 0"><div class="seek"><div class="track"><div class="fill"></div></div>'
+         + '<div class="times"><span>1:42</span><span>-2:26</span></div></div>'
+         + '<div class="transport" style="margin-top:20px">'
+         + '<span class="tbtn">' + I.prev + '</span><span class="play">' + I.play + '</span>'
+         + '<span class="tbtn">' + I.next + '</span></div>'
+         + '<div class="unlock-hint" style="margin-top:26px"><span class="grabber"></span>'
+         + '<span style="display:inline-flex;align-items:center;gap:5px">' + I.chevUp + 'Swipe up to unlock</span></div></div>';
+
+      if (o.overlayEdgeTab) {
+        h += '<div class="edge-tab" style="top:300px;right:0">' + I.chevR
+           + '<span class="vlabel">CLOSE</span></div>';
+      }
+      h += '</div>';
+    }
+
+    /* ---- coach mark ---- */
+    if (o.coach) {
+      h += '<div class="coach-scrim"></div>';
+      h += '<div class="coach" style="top:196px">'
+         + '<div class="bubble">Tap for lyrics — or swipe the artwork.'
+         + '<span class="dismiss">GOT IT</span></div>'
+         + '<div class="arrow"></div></div>';
+    }
+
+    h += '</div>';
+    return h;
+  }
+
+  /* ---------------- frame + section builders ---------------- */
+  function frame(id, name, desc, inner) {
+    return '<div class="frame"><div class="frame-caption">'
+      + '<span class="frame-id">' + id + '</span><span class="frame-name">' + name + '</span>'
+      + '<p class="frame-desc">' + desc + '</p></div>'
+      + '<div class="frame-card mobile">' + inner + '</div></div>';
+  }
+  var ARROW = '<div class="connector-row">&rarr;</div>';
+
+  function section(letter, title, sub, rowHtml, notes) {
+    return '<div class="section-heading"><span class="section-letter">' + letter + '</span>'
+      + '<span>' + title + '</span><span class="sub">' + sub + '</span></div>'
+      + '<div class="frame-row">' + rowHtml + '</div>'
+      + '<div class="note-row">' + (notes || '') + '</div>';
+  }
+  function note(html) { return '<div class="sticky-note">' + html + '</div>'; }
+  function tradeoff(html) { return '<div class="sticky-note tradeoff"><b>Tradeoff —</b> ' + html + '</div>'; }
+
+  var out = '';
+
+  /* ===== A ===== */
+  out += section('A', 'Current state', 'BEFORE — what ships today',
+    frame('A1', 'Player, as-is', 'Default skin. Nothing on screen indicates lyrics exist; the only way in is an undiscoverable horizontal swipe across the artwork.',
+      phone({}))
+    + ARROW
+    + frame('A2', 'Lyrics overlay, as-is', 'Opened by that same swipe. No title, no close control, no caption — the only way out is guessing the swipe again.',
+      phone({ overlay: true })),
+    note('<b>The problem:</b> an invisible swipe is the entire interaction model. Users who never swipe horizontally over the artwork never learn lyrics exist; users who land here by accident have no visible exit. Both frames are the current build — everything after this is a proposal.')
+  );
+
+  /* ===== B ===== */
+  out += section('B', 'Variant 1 — Lyrics pill button', 'A visible, tappable toggle',
+    frame('B1', 'Player with lyrics pill', 'A small ghost-fill pill (note glyph + "Lyrics") sits between the artwork and the title block. Tapping opens the overlay; the swipe still works.',
+      phone({ pill: 'idle' }))
+    + ARROW
+    + frame('B2', 'Overlay, pill active', 'Same pill, same position, now in the accent-muted active state with a ✕ glyph. Tapping it again closes — the control never moves.',
+      phone({ overlay: true, overlayPill: true })),
+    tradeoff('Most evident; adds permanent chrome to every skin; smallest mental model (a button toggles).')
+  );
+
+  /* ===== C ===== */
+  out += section('C', 'Variant 2 — Edge peek + swipe hint', 'Teaches the gesture instead of replacing it',
+    frame('C1', 'Player with edge tab', 'A slim accent-tinted tab peeks from the right screen edge at artwork height (chevron ‹ + rotated LYRICS microlabel), implying a pull.',
+      phone({ edgeTab: true }))
+    + ARROW
+    + frame('C2', 'First-run nudge', 'On first unlock, a chip slides in beside the artwork with a one-pass shimmer, then settles. Shown once per install.',
+      phone({ edgeTab: true, nudge: true }))
+    + ARROW
+    + frame('C3', 'Overlay with return tab', 'Mirrored tab on the right edge (chevron › CLOSE) plus a "‹ Swipe to close" caption chip above the lyrics.',
+      phone({ overlay: true, overlayChip: true, overlayEdgeTab: true })),
+    note('<b>Motion (C2):</b> chip slides in from the right edge, 240ms ease-out, 60ms after unlock; a diagonal shimmer sweeps once over 700ms; auto-dismiss at 4s or on any touch. Static render here — the shimmer gradient is baked into the frame.')
+    + tradeoff('Keeps skins chrome-light; discoverability depends on noticing the edge tab.')
+  );
+
+  /* ===== D ===== */
+  out += section('D', 'Variant 3 — Pill + one-time coach mark', 'V1 plus an explicit first-run teach',
+    frame('D1', 'First run, coach mark', 'The V1 pill, spotlit against a dimming scrim, with an anchored accent tooltip naming both routes in.',
+      phone({ pill: 'idle', spotlight: true, coach: true }))
+    + ARROW
+    + frame('D2', 'Steady state', 'After dismissal the coach mark never returns. Identical to B1 for the rest of the app’s life.',
+      phone({ pill: 'idle' }))
+    + ARROW
+    + frame('D3', 'Overlay with top bar', 'Explicit "Lyrics" title and a ✕ close button top-right — no gesture knowledge required to get out.',
+      phone({ overlay: true, overlayTopBar: true })),
+    tradeoff('Most discoverable; most to build; coach mark shows once.')
+  );
+
+  document.getElementById('sections').innerHTML = out;
+
+  /* ---------------- pan / zoom ---------------- */
+  var vp = document.getElementById('viewport'), cv = document.getElementById('canvas');
+  var x = 0, y = 0, z = 1, MIN = 0.1, MAX = 2.5;
+  function apply() {
+    cv.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + z + ')';
+    document.getElementById('zoomPct').textContent = Math.round(z * 100) + '%';
+  }
+  function fit() {
+    var w = cv.scrollWidth, h = cv.scrollHeight;
+    z = Math.min(MAX, Math.max(MIN, Math.min(innerWidth / w, innerHeight / h) * 0.95));
+    x = (innerWidth - w * z) / 2; y = Math.max(20, (innerHeight - h * z) / 2);
+    apply();
+  }
+  vp.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    var nz = Math.min(MAX, Math.max(MIN, z * Math.exp(-e.deltaY * 0.0015)));
+    x = e.clientX - (e.clientX - x) * (nz / z);
+    y = e.clientY - (e.clientY - y) * (nz / z);
+    z = nz; apply();
+  }, { passive: false });
+  var panning = false, px = 0, py = 0;
+  vp.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    panning = true; px = e.clientX - x; py = e.clientY - y;
+    vp.classList.add('panning'); vp.setPointerCapture(e.pointerId);
+  });
+  vp.addEventListener('pointermove', function (e) {
+    if (panning) { x = e.clientX - px; y = e.clientY - py; apply(); }
+  });
+  vp.addEventListener('pointerup', function () { panning = false; vp.classList.remove('panning'); });
+  document.getElementById('zoomIn').onclick = function () { z = Math.min(MAX, z * 1.25); apply(); };
+  document.getElementById('zoomOut').onclick = function () { z = Math.max(MIN, z / 1.25); apply(); };
+  document.getElementById('zoomFit').onclick = fit;
+  fit();
+})();
+</script>
+</body>
+</html>
