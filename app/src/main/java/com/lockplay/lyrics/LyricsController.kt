@@ -3,6 +3,7 @@ package com.lockplay.lyrics
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -11,6 +12,7 @@ private val Context.lyricsDataStore by preferencesDataStore(name = "lyrics")
 private val Enabled = booleanPreferencesKey("enabled")
 private val HintSeen = booleanPreferencesKey("hint_seen")
 private val CoachMarkSeen = booleanPreferencesKey("coach_mark_seen")
+private val LocalFolderUri = stringPreferencesKey("local_folder_uri")
 
 /**
  * Persists whether the opt-in lyrics feature is on, and whether the one-time discoverability hint
@@ -29,6 +31,9 @@ class LyricsController(private val context: Context) {
     /** Emits whether the one-time lyrics-pill coach mark has been shown. Defaults to false. */
     val coachMarkSeen: Flow<Boolean> = context.lyricsDataStore.data.map { it[CoachMarkSeen] ?: false }
 
+    /** Emits the persisted local lyrics folder URI. Defaults to "": sentinel-not-null, never null. */
+    val lyricsFolderUri: Flow<String> = context.lyricsDataStore.data.map { it[LocalFolderUri] ?: "" }
+
     suspend fun setEnabled(value: Boolean) {
         context.lyricsDataStore.edit { it[Enabled] = value }
     }
@@ -39,5 +44,9 @@ class LyricsController(private val context: Context) {
 
     suspend fun markCoachMarkSeen() {
         context.lyricsDataStore.edit { it[CoachMarkSeen] = true }
+    }
+
+    suspend fun setLyricsFolderUri(value: String) {
+        context.lyricsDataStore.edit { it[LocalFolderUri] = value }
     }
 }

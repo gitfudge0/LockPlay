@@ -77,6 +77,7 @@ fun PlayerGalleryScreen(
     val selectedSkin by skinController.skin.collectAsStateWithLifecycle(initialValue = DefaultSkin)
     val theme by themeController.theme.collectAsStateWithLifecycle(initialValue = BuiltInThemes.first())
     val lyricsEnabled by lyricsController.enabled.collectAsStateWithLifecycle(initialValue = false)
+    val lyricsFolderUri by lyricsController.lyricsFolderUri.collectAsStateWithLifecycle(initialValue = "")
 
     // One gradient brush per sample track, remembered so album-art placeholders survive recomposition.
     val accent = AppTheme.colors.accent
@@ -159,6 +160,14 @@ fun PlayerGalleryScreen(
             onEnabledChange = { value -> scope.launch { lyricsController.setEnabled(value) } },
             modifier = Modifier.padding(horizontal = AppTheme.spacing.screenPadding),
         )
+
+        if (showLocalLyricsSection(lyricsEnabled)) {
+            LocalLyricsSettings(
+                folderUri = lyricsFolderUri,
+                onFolderUriChange = { value -> scope.launch { lyricsController.setLyricsFolderUri(value) } },
+                modifier = Modifier.padding(horizontal = AppTheme.spacing.screenPadding),
+            )
+        }
 
         Spacer(Modifier.weight(1f))
 

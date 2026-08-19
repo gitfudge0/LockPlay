@@ -43,6 +43,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lockplay.design.AppTheme
+import com.lockplay.lyrics.LyricsController
 import com.lockplay.lyrics.LyricsRepository
 import com.lockplay.lyrics.shouldConsumeHorizontal
 import com.lockplay.lyrics.shouldShowCoachMark
@@ -145,12 +147,25 @@ fun LockscreenScreen(
     var hintVisible by remember { mutableStateOf(false) }
 
     val lyrics by LyricsRepository.lyrics.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    // ponytail: a local instance is fine — LyricsController's DataStore is keyed by Context, not
+    // by instance, so this reads the same persisted flag as any other instance.
+    val lyricsController = remember(context) { LyricsController(context.applicationContext) }
+    val lyricsFolderUri by lyricsController.lyricsFolderUri.collectAsStateWithLifecycle(initialValue = "")
     LaunchedEffect(state.title, state.artist, lyricsVisible, lyricsEnabled) {
         LyricsRepository.clear()
         // Guarded here as well as inside the repository: the call site is where the decision to
         // send track metadata off-device is actually taken.
         if (lyricsVisible && lyricsEnabled) {
-            LyricsRepository.request(state.title, state.artist, state.album, state.durationMs, lyricsEnabled)
+            LyricsRepository.request(
+                state.title,
+                state.artist,
+                state.album,
+                state.durationMs,
+                lyricsEnabled,
+                context,
+                lyricsFolderUri,
+            )
         }
     }
 
