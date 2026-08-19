@@ -17,7 +17,7 @@ Generated 2026-08-13 by `fudge:conventions`. `fudge:conventions` is the generato
 
 ## Adding or moving code
 
-Single `:app` module, packages split by concern (`model/`, `media/`, `trigger/`, `design/`, `ui/<feature>/`), one-way import direction, no `utils/` package, a new skin is one file plus one line in `BuiltInSkins`. Before creating, moving, or splitting a file: **read `references/structure.md`.**
+Single `:app` module, packages split by concern (`model/`, `media/`, `trigger/`, `design/`, `ui/<feature>/`), one-way import direction, no `utils/` package, a new skin is one file plus one line in `BuiltInSkins`. Before creating, moving, or splitting a file: **read `references/structure.md`.** Converting an HTML mock to a screen: **read `references/mock-to-compose.md`.**
 
 ## Errors, boundaries, and state
 
