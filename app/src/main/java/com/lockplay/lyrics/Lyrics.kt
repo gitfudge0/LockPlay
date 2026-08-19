@@ -18,6 +18,9 @@ data class LyricLine(val atMs: Long, val text: String)
  */
 enum class LyricsStatus { Idle, Loading, Synced, Plain, NotFound, Offline }
 
+/** Where [Lyrics] came from, for attribution in the overlay. [None] is the default for anything status-only. */
+enum class LyricsSource { None, Local, Lrclib }
+
 /**
  * Lyrics state for the current track, read by the lyrics overlay and written by the lyrics
  * fetcher. Absence is [EMPTY], never null (A7).
@@ -32,6 +35,7 @@ data class Lyrics(
     val status: LyricsStatus,
     val lines: List<LyricLine>,
     val plainText: String,
+    val source: LyricsSource = LyricsSource.None,
 ) {
     companion object {
         /** Nothing loaded and nothing requested — the sentinel for "no lyrics", mirroring `NowPlaying.EMPTY`. */

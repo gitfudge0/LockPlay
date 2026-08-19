@@ -152,7 +152,7 @@ fun LockscreenScreen(
     // by instance, so this reads the same persisted flag as any other instance.
     val lyricsController = remember(context) { LyricsController(context.applicationContext) }
     val lyricsFolderUri by lyricsController.lyricsFolderUri.collectAsStateWithLifecycle(initialValue = "")
-    LaunchedEffect(state.title, state.artist, lyricsVisible, lyricsEnabled) {
+    LaunchedEffect(state.title, state.artist, lyricsVisible, lyricsEnabled, lyricsFolderUri) {
         LyricsRepository.clear()
         // Guarded here as well as inside the repository: the call site is where the decision to
         // send track metadata off-device is actually taken.

@@ -130,6 +130,7 @@ fun LyricsOverlay(
             }
         }
         LyricsAttribution(
+            source = lyrics.source,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(AppTheme.spacing.md),

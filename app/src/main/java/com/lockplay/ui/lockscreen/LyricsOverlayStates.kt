@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import com.lockplay.design.AppTheme
+import com.lockplay.lyrics.LyricsSource
 
 /**
  * The non-[com.lockplay.lyrics.LyricsStatus.Synced] faces of [LyricsOverlay], split out of
@@ -79,12 +80,17 @@ internal fun OfflineLyrics() {
 
 /**
  * Shown in every state, including Idle: the match is by title and artist, so it can be wrong, and
- * the user is owed both the source and that caveat.
+ * the user is owed both the source and that caveat. Renders nothing for [LyricsSource.None].
  */
 @Composable
-internal fun LyricsAttribution(modifier: Modifier = Modifier) {
+internal fun LyricsAttribution(source: LyricsSource, modifier: Modifier = Modifier) {
+    val text = when (source) {
+        LyricsSource.Lrclib -> "Lyrics from LRCLIB — matched by title and artist, so they may be wrong"
+        LyricsSource.Local -> "Lyrics from your music files"
+        LyricsSource.None -> return
+    }
     Text(
-        text = "Lyrics from LRCLIB — matched by title and artist, so they may be wrong",
+        text = text,
         style = AppTheme.typography.timestamp,
         color = AppTheme.colors.textTertiary,
         textAlign = TextAlign.Center,

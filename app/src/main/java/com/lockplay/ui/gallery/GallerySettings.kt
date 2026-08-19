@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat
 import com.lockplay.design.AppTheme
 import com.lockplay.design.components.AppDialog
 import com.lockplay.design.components.AppText
+import com.lockplay.lyrics.LyricsRepository
 
 /**
  * Whether turning the lyrics toggle to [requestedValue] must first show the pre-enable explanation
@@ -141,6 +142,7 @@ fun LocalLyricsSettings(
             } catch (e: SecurityException) {
                 Log.w("LocalLyricsSettings", "Failed to persist folder permission", e)
             }
+            LyricsRepository.clearCache()
             onFolderUriChange(uri.toString())
         }
     }
