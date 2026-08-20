@@ -38,6 +38,12 @@ private val AudioProjection = arrayOf(
 
 private const val MusicSelection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
 private const val MusicAndTitleSelection = "$MusicSelection AND ${MediaStore.Audio.Media.TITLE} LIKE ?"
+private const val MusicAndFileNameSelection =
+    "$MusicSelection AND ${MediaStore.Audio.Media.DISPLAY_NAME} LIKE ? ESCAPE '\\'"
+
+// ponytail: at most this many filename candidates get their real tags read — upgrade path is a
+// persisted tag index built once, instead of a bounded scan per lookup.
+private const val MaxTagVerifyCandidates = 10
 
 object LocalLyricsSource {
 
@@ -64,13 +70,78 @@ object LocalLyricsSource {
 
         val match = findRow(context, title, artist, durationMs, prefilterTitle = true)
             ?: findRow(context, title, artist, durationMs, prefilterTitle = false)
-            ?: return Lyrics.EMPTY
+
+        if (match == null) {
+            // Devices whose MediaStore never extracted tags report every row as title=filename stem,
+            // artist="<unknown>", so the column match above can never hit; verify tags in-file instead.
+            return verifyByTags(context, title, artist, durationMs, lyricsFolderUri) ?: Lyrics.EMPTY
+        }
 
         embedded(context, match)?.let { return it }
         if (lyricsFolderUri != null) {
             lrc(context, match, lyricsFolderUri)?.let { return it }
         }
         return Lyrics.EMPTY
+    }
+
+    private fun verifyByTags(
+        context: Context,
+        title: String,
+        artist: String,
+        durationMs: Long,
+        lyricsFolderUri: Uri?,
+    ): Lyrics? {
+        if (title.isBlank()) return null
+        return try {
+            context.contentResolver.query(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                AudioProjection,
+                MusicAndFileNameSelection,
+                arrayOf("%${escapeLike(title)}%"),
+                null,
+            )?.use { cursor ->
+                val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+                val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
+                val pathColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.RELATIVE_PATH)
+                var checked = 0
+                while (cursor.moveToNext() && checked < MaxTagVerifyCandidates) {
+                    checked++
+                    val row = AudioRow(
+                        id = cursor.getLong(idColumn),
+                        displayName = cursor.getString(nameColumn) ?: "",
+                        relativePath = cursor.getString(pathColumn) ?: "",
+                    )
+                    val tags = readTags(context, row) ?: continue
+                    if (!rowMatches(tags.title, tags.artist, tags.durationMs, title, artist, durationMs)) continue
+                    if (tags.lyrics.isNotBlank()) {
+                        lyricsFromText(tags.lyrics).takeIf { it != Lyrics.EMPTY }?.let { return@use it }
+                    }
+                    if (lyricsFolderUri != null) {
+                        lrc(context, row, lyricsFolderUri)?.let { return@use it }
+                    }
+                }
+                null
+            }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "MediaStore filename query denied — READ_MEDIA_AUDIO revoked?", e)
+            null
+        }
+    }
+
+    private fun readTags(context: Context, row: AudioRow): EmbeddedTags? {
+        val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, row.id)
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { embeddedTags(it, row.displayName) }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "embedded tag read denied", e)
+            null
+        } catch (e: FileNotFoundException) {
+            Log.w(TAG, "embedded tag source missing", e)
+            null
+        } catch (e: IOException) {
+            Log.w(TAG, "embedded tag read failed", e)
+            null
+        }
     }
 
     private fun findRow(
@@ -113,27 +184,6 @@ object LocalLyricsSource {
             Log.w(TAG, "MediaStore audio query denied — READ_MEDIA_AUDIO revoked?", e)
             null
         }
-    }
-
-    private fun rowMatches(
-        rowTitle: String,
-        rowArtist: String,
-        rowDurationMs: Long,
-        title: String,
-        artist: String,
-        durationMs: Long,
-    ): Boolean {
-        if (normalizeForMatch(rowTitle) != normalizeForMatch(title)) return false
-        val normalizedRowArtist = normalizeForMatch(rowArtist)
-        val normalizedArtist = normalizeForMatch(artist)
-        val artistMatches = normalizedRowArtist == normalizedArtist ||
-            // "feat." credits land in the artist tag for one side only often enough that a
-            // containment check recovers more matches than it costs in false positives.
-            (normalizedArtist.isNotEmpty() && normalizedArtist in normalizedRowArtist) ||
-            (normalizedRowArtist.isNotEmpty() && normalizedRowArtist in normalizedArtist)
-        if (!artistMatches) return false
-        if (durationMs > 0L && abs(rowDurationMs - durationMs) > DurationMatchToleranceMs) return false
-        return true
     }
 
     private fun embedded(context: Context, row: AudioRow): Lyrics? {
@@ -185,6 +235,40 @@ object LocalLyricsSource {
 
     private data class AudioRow(val id: Long, val displayName: String, val relativePath: String)
 }
+
+/**
+ * Whether a library entry (`row*`) is the track that is playing. Pure and Compose-free so the
+ * matching rules are testable without a ContentResolver.
+ *
+ * A duration of 0 on either side is a wildcard: MediaStore reports NULL durations on devices that
+ * never scanned the tags, and mp3 tags carry no duration at all.
+ */
+fun rowMatches(
+    rowTitle: String,
+    rowArtist: String,
+    rowDurationMs: Long,
+    title: String,
+    artist: String,
+    durationMs: Long,
+): Boolean {
+    if (normalizeForMatch(rowTitle) != normalizeForMatch(title)) return false
+    val normalizedRowArtist = normalizeForMatch(rowArtist)
+    val normalizedArtist = normalizeForMatch(artist)
+    val artistMatches = normalizedRowArtist == normalizedArtist ||
+        // "feat." credits land in the artist tag for one side only often enough that a
+        // containment check recovers more matches than it costs in false positives.
+        (normalizedArtist.isNotEmpty() && normalizedArtist in normalizedRowArtist) ||
+        (normalizedRowArtist.isNotEmpty() && normalizedRowArtist in normalizedArtist)
+    if (!artistMatches) return false
+    if (durationMs > 0L && rowDurationMs > 0L && abs(rowDurationMs - durationMs) > DurationMatchToleranceMs) {
+        return false
+    }
+    return true
+}
+
+/** Escapes a value for a SQL `LIKE ? ESCAPE '\'` argument so wildcards in it match literally. */
+fun escapeLike(value: String): String =
+    value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 /**
  * Document ids to try inside the user's lyrics tree, most specific first: the album subfolder

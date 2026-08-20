@@ -145,6 +145,57 @@ class LocalLyricsTest {
         assertEquals(Lyrics.EMPTY, lyricsFromText(""))
     }
 
+    @Test
+    fun `flac embedded tags carry title artist lyrics and the streaminfo duration`() {
+        val flac = flacFile(
+            comments = listOf("TITLE=Good Goodbye", "ARTIST=HWASA", "LYRICS=[00:01.00] line one"),
+            streamInfo = streamInfo(sampleRate = 44_100, totalSamples = 44_100L * 185),
+        )
+        val tags = embeddedTags(ByteArrayInputStream(flac), "01. Good Goodbye.flac")
+        assertEquals("Good Goodbye", tags.title)
+        assertEquals("HWASA", tags.artist)
+        assertEquals("[00:01.00] line one", tags.lyrics)
+        assertEquals(185_000L, tags.durationMs)
+    }
+
+    @Test
+    fun `flac with a zero sample rate reports duration zero instead of dividing by zero`() {
+        val flac = flacFile(listOf("TITLE=Song"))
+        assertEquals(0L, embeddedTags(ByteArrayInputStream(flac), "Song.flac").durationMs)
+    }
+
+    @Test
+    fun `id3v2 3 embedded tags carry title and artist with duration zero`() {
+        val tag = id3Tag(
+            major = 3,
+            frames = listOf(
+                frame(major = 3, id = "TIT2", body = byteArrayOf(3) + "Rockstar".toByteArray()),
+                frame(major = 3, id = "TPE1", body = byteArrayOf(3) + "Someone".toByteArray()),
+                usltFrame(major = 3, encoding = 3, text = "words"),
+            ),
+        )
+        val tags = embeddedTags(ByteArrayInputStream(tag), "01. Rockstar.mp3")
+        assertEquals("Rockstar", tags.title)
+        assertEquals("Someone", tags.artist)
+        assertEquals("words", tags.lyrics)
+        assertEquals(0L, tags.durationMs)
+    }
+
+    @Test
+    fun `id3 text frames honour the encoding byte`() {
+        val tag = id3Tag(
+            major = 3,
+            frames = listOf(frame(major = 3, id = "TIT2", body = byteArrayOf(0) + "café".toByteArray(Charsets.ISO_8859_1))),
+        )
+        assertEquals("café", embeddedTags(ByteArrayInputStream(tag), "Song.mp3").title)
+    }
+
+    @Test
+    fun `an unsupported extension yields empty tags`() {
+        val flac = flacFile(listOf("TITLE=hidden"))
+        assertEquals(EmbeddedTags.EMPTY, embeddedTags(ByteArrayInputStream(flac), "Song.m4a"))
+    }
+
     private fun id3Tag(major: Int, frames: List<ByteArray>, unsync: Boolean = false): ByteArray {
         val body = frames.fold(ByteArray(0)) { acc, f -> acc + f }
         val header = ByteArray(10)
@@ -193,10 +244,16 @@ class LocalLyricsTest {
         target[offset + 3] = (value and 0xFF).toByte()
     }
 
-    private fun flacFile(comments: List<String>): ByteArray {
-        val streamInfo = metadataBlock(type = 0, last = false, data = ByteArray(34))
-        return "fLaC".toByteArray(Charsets.US_ASCII) + streamInfo +
+    private fun flacFile(comments: List<String>, streamInfo: ByteArray = ByteArray(34)): ByteArray =
+        "fLaC".toByteArray(Charsets.US_ASCII) +
+            metadataBlock(type = 0, last = false, data = streamInfo) +
             metadataBlock(type = 4, last = true, data = vorbisComment(comments))
+
+    private fun streamInfo(sampleRate: Int, totalSamples: Long): ByteArray {
+        val data = ByteArray(34)
+        val bits = (sampleRate.toLong() shl 44) or (2L shl 41) or (15L shl 36) or totalSamples
+        for (i in 0 until 8) data[10 + i] = ((bits shr (56 - i * 8)) and 0xFF).toByte()
+        return data
     }
 
     private fun metadataBlock(type: Int, last: Boolean, data: ByteArray): ByteArray {

@@ -1,6 +1,8 @@
 package com.lockplay.lyrics
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LocalLyricsSourceTest {
@@ -43,6 +45,26 @@ class LocalLyricsSourceTest {
             listOf("primary:Music/Artist/Album/song.lrc", "primary:Music/song.lrc"),
             lrcDocIdCandidates("primary:Music", "Music/Artist/Album/", "song.lrc"),
         )
+    }
+
+    @Test
+    fun `like escaping neutralises wildcards and the escape character itself`() {
+        assertEquals("100\\% Pure", escapeLike("100% Pure"))
+        assertEquals("A\\_B", escapeLike("A_B"))
+        assertEquals("back\\\\slash", escapeLike("back\\slash"))
+        assertEquals("Rockstar", escapeLike("Rockstar"))
+    }
+
+    @Test
+    fun `a zero duration on either side is a wildcard`() {
+        assertTrue(rowMatches("Song", "Artist", 0L, "Song", "Artist", 200_000L))
+        assertTrue(rowMatches("Song", "Artist", 200_000L, "Song", "Artist", 0L))
+        assertTrue(rowMatches("Song", "Artist", 200_000L, "Song", "Artist", 201_000L))
+    }
+
+    @Test
+    fun `two known durations that differ beyond tolerance do not match`() {
+        assertFalse(rowMatches("Song", "Artist", 200_000L, "Song", "Artist", 240_000L))
     }
 
     @Test
